@@ -36,7 +36,7 @@ class Product extends Model implements HasMedia
         'base_price' => 'decimal:2',
         'cost' => 'decimal:2',
         'is_active' => 'boolean',
-        'images' => 'array',
+        'images' => 'json',
         'tags' => 'array',
         'specifications' => 'array',
     ];

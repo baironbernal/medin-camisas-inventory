@@ -74,6 +74,8 @@ class ProductResource extends Resource
                     ])
                     ->columns(2),
 
+
+
                 Forms\Components\Section::make('Detalles')
                     ->schema([
                         Forms\Components\Textarea::make('description')
@@ -85,6 +87,22 @@ class ProductResource extends Resource
                             ->label('Activo')
                             ->required()
                             ->default(true),
+
+                            Forms\Components\FileUpload::make('images')
+                            ->label('Fotos')
+                            ->image()
+                            ->multiple()
+                            ->disk('public')
+                            ->directory('products/images')
+                            ->visibility('public')
+                            ->maxFiles(20)
+                            ->maxSize(5120) // 5MB
+                            ->imageEditor()
+                            ->reorderable()
+                            ->panelLayout('grid')
+                            ->uploadingMessage('Subiendo fotos...')
+                            ->helperText('Máximo 10 imágenes, 5MB cada una'),
+
                     ]),
             ]);
     }

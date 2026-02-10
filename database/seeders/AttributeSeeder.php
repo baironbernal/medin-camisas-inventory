@@ -19,6 +19,26 @@ class AttributeSeeder extends Seeder
             'sort_order' => 1,
         ]);
 
+        // Types
+        $type = Attribute::create([
+            'code' => 'TYPE',
+            'name' => 'Tipo',
+            'data_type' => 'text',
+            'is_required' => true,
+            'sort_order' => 1,
+        ]);
+
+        $types = ['Manga Corta', 'Manga Larga', 'Sin Manga', 'Pantalon Largo', 'Pantalón Corto', 'Bermuda', 'Falda', 'Vestido', 'Chaqueta', 'Abrigo'];
+        foreach ($types as $index => $typeValue) {
+            AttributeValue::create([
+                'attribute_id' => $type->id,
+                'value' => $typeValue,
+                'code' => strtoupper(str_replace(' ', '_', $typeValue)),
+                'sort_order' => $index,
+                'is_active' => true,
+            ]);
+        }
+
         $sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
         foreach ($sizes as $index => $sizeValue) {
             AttributeValue::create([
