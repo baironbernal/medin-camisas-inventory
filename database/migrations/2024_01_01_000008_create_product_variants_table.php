@@ -20,7 +20,6 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->json('images')->nullable();
             $table->timestamps();
-
             $table->index('sku');
             $table->index('barcode');
             $table->index(['product_id', 'is_active']);

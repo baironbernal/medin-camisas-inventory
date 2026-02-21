@@ -5,9 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\Category;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class ProductController extends Controller
+
+class ProductController extends Controller implements HasMiddleware
 {
+
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth:sanctum', except: ['index', 'show']),
+        ];
+    }
+    
     /**
      * Display a listing of the resource.
      */
@@ -136,9 +147,15 @@ class ProductController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $slug)
     {
-        //
+        $product = Product::with(['category', 
+        'variants.variantAttributes.attributeValue', 
+        'variants.variantAttributes.attribute'])
+        ->where('slug', $slug)
+        ->firstOrFail();
+
+        return response()->json($product);
     }
 
     /**

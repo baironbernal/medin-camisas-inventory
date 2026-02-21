@@ -12,6 +12,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Model;
 
 class VariantsRelationManager extends RelationManager
 {
@@ -19,10 +20,36 @@ class VariantsRelationManager extends RelationManager
 
     protected static ?string $title = 'Variantes';
 
+    protected function canEdit(Model $record): bool
+    {
+        return true;
+    }
+    
+    protected function canView(Model $record): bool
+    {
+        return true;
+    }
+
     public function form(Form $form): Form
     {
         return $form
             ->schema([
+                Forms\Components\Section::make('Imágenes de la Variante')
+                ->schema([
+                    Forms\Components\FileUpload::make('images')
+                        ->label('Galería')
+                        ->multiple()
+                        ->image()
+                        ->reorderable()
+                        ->appendFiles()
+                        ->disk('public')
+                        ->directory('variants')
+                        ->visibility('public')
+                        ->imageEditor()
+                        ->panelLayout('grid')
+                        ->columnSpanFull(),
+                ])
+                ->columnSpanFull(),
                 Forms\Components\TextInput::make('sku')
                     ->label('SKU')
                     ->required()
@@ -252,9 +279,11 @@ class VariantsRelationManager extends RelationManager
                     
                 Tables\Actions\CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+          ->actions([
+                Tables\Actions\EditAction::make()->slideOver(), // 👈 this line
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make(),
+                
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -262,5 +291,6 @@ class VariantsRelationManager extends RelationManager
                 ]),
             ]);
     }
+    
 }
 
