@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
-
+use App\Http\Resources\ProductResource;
 
 class ProductController extends Controller implements HasMiddleware
 {
@@ -23,7 +23,7 @@ class ProductController extends Controller implements HasMiddleware
      * Display a listing of the resource.
      */
     public function index(Request $request)
-{
+    {
     /*
     |--------------------------------------------------------------------------
     | Resolve Category IDs First (FAST)
@@ -120,8 +120,14 @@ class ProductController extends Controller implements HasMiddleware
 
             fn ($q) => $q->latest()
         )
+        ->withCount(['variants as colors_count' => function ($query) {
+            $query->join('variant_attributes', 'product_variants.id', '=', 'variant_attributes.product_variant_id')
+                  ->join('attributes', 'variant_attributes.attribute_id', '=', 'attributes.id')
+                  ->where('attributes.code', 'COLOR')
+                  ->select(\DB::raw('count(distinct variant_attributes.attribute_value_id)'));
+        }]) 
 
-        ->with(['category', 'variants'])
+        ->with(['category'])
 
         ->paginate(10);
 
@@ -149,13 +155,26 @@ class ProductController extends Controller implements HasMiddleware
      */
     public function show(string $slug)
     {
-        $product = Product::with(['category', 
-        'variants.variantAttributes.attributeValue', 
-        'variants.variantAttributes.attribute'])
-        ->where('slug', $slug)
-        ->firstOrFail();
+        $product = Product::query()
+            ->where('slug', $slug)
+            ->with([
+                'category',
+                'variants' => function ($query) {
+                    $query->whereHas('inventories', function ($q) {
+                        $q->where('quantity_available', '>', 0);
+                    })
+                    ->with([
+                        'inventories' => function ($q) {
+                            $q->where('quantity_available', '>', 0);
+                        },
+                        'variantAttributes.attribute',
+                        'variantAttributes.attributeValue',
+                    ]);
+                },
+            ])
+            ->firstOrFail();
 
-        return response()->json($product);
+        return new ProductResource($product);
     }
 
     /**

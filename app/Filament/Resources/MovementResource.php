@@ -53,28 +53,32 @@ class MovementResource extends Resource
                                 default => 'Seleccione un tipo de movimiento'
                             }),
                         Forms\Components\Select::make('product_variant_id')
-                            ->label('Variante de Producto')
-                            ->options(function () {
-                                return ProductVariant::with('product')
-                                    ->get()
-                                    ->mapWithKeys(function ($variant) {
-                                        $attributes = $variant->variantAttributes()
-                                            ->with(['attribute', 'attributeValue'])
-                                            ->get()
-                                            ->map(function ($va) {
-                                                return $va->attributeValue->value ?? '';
-                                            })
-                                            ->filter()
-                                            ->join(' / ');
-                                        
-                                        $label = $variant->sku . ' - ' . $variant->product->name;
-                                        if ($attributes) {
-                                            $label .= ' (' . $attributes . ')';
-                                        }
-                                        
-                                        return [$variant->id => $label];
-                                    });
-                            })
+                        ->label('Variante de Producto')
+                        ->options(function () {
+                            return ProductVariant::query()
+                                ->whereHas('inventories', function ($query) {
+                                    $query->where('quantity_available', '>', 0);
+                                })
+                                ->with(['product', 'variantAttributes.attribute', 'variantAttributes.attributeValue'])
+                                ->get()
+                                ->mapWithKeys(function ($variant) {
+
+                                    $attributes = $variant->variantAttributes
+                                        ->map(function ($va) {
+                                            return $va->attributeValue->value ?? '';
+                                        })
+                                        ->filter()
+                                        ->join(' / ');
+
+                                    $label = $variant->sku . ' - ' . $variant->product->name;
+
+                                    if ($attributes) {
+                                        $label .= ' (' . $attributes . ')';
+                                    }
+
+                                    return [$variant->id => $label];
+                                });
+                        })
                             ->required()
                             ->searchable()
                             ->live()

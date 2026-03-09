@@ -57,6 +57,7 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Gestión de Tiendas',
                 'Gestión de Productos',
+                'Gestión de Pedidos',
                 'Inventario',
                 'Configuración',
                 'Usuarios y Roles',
