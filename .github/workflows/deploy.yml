@@ -16,7 +16,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: "8.4"
           extensions: mbstring, bcmath, intl, pdo_mysql
           tools: composer, npm
 
@@ -26,7 +26,7 @@ jobs:
           npm install
           npm run build
 
-      - name: Upload built assets to Hostinger
+      - name: Upload built assets
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOSTINGER_HOST }}
@@ -45,7 +45,6 @@ jobs:
           port: ${{ secrets.HOSTINGER_PORT }}
           key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
           script: |
-
             DOMAIN_PATH=${{ secrets.HOSTINGER_PATH }}
             PROJECT_PATH=$DOMAIN_PATH/medin-camisas-inventory
             PUBLIC_PATH=$DOMAIN_PATH/public_html
@@ -53,65 +52,57 @@ jobs:
             echo "Entering project folder"
             cd $PROJECT_PATH
 
-            echo "Pulling latest code"
+            echo "Pull latest code"
             git pull origin main
 
-            echo "Installing composer dependencies"
+            echo "Install composer"
             php /usr/local/bin/composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-            echo "Clearing Laravel cache"
+            echo "Laravel cache"
             php artisan optimize:clear
-
-            echo "Caching Laravel"
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
 
-            echo "Publishing Filament assets"
+            echo "Filament assets"
             php artisan filament:assets
 
-            echo "Fixing permissions"
+            echo "Permissions"
             chmod -R 775 storage
             chmod -R 775 bootstrap/cache
 
-            echo "Cleaning public_html except build"
+            echo "Clean public_html except build"
             find $PUBLIC_PATH -mindepth 1 -maxdepth 1 ! -name build -exec rm -rf {} +
 
-            echo "Copying Laravel public files except build"
+            echo "Copy public files except build"
             rsync -av --exclude=build public/ $PUBLIC_PATH/
 
-            echo "Creating .htaccess"
-            cat << 'EOF' > $PUBLIC_PATH/.htaccess
-<IfModule mod_rewrite.c>
-    RewriteEngine On
+            echo "Create .htaccess"
+            printf "%s\n" \
+            "<IfModule mod_rewrite.c>" \
+            "RewriteEngine On" \
+            "RewriteCond %{REQUEST_URI} !^/index.php" \
+            "RewriteCond %{REQUEST_FILENAME} !-f" \
+            "RewriteCond %{REQUEST_FILENAME} !-d" \
+            "RewriteRule ^ index.php [L]" \
+            "</IfModule>" > $PUBLIC_PATH/.htaccess
 
-    RewriteCond %{REQUEST_URI} !^/index.php
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-
-    RewriteRule ^ index.php [L]
-</IfModule>
-EOF
-
-            echo "Creating correct Laravel index.php"
-            cat << 'EOF' > $PUBLIC_PATH/index.php
-<?php
-
-use Illuminate\Foundation\Application;
-use Illuminate\Http\Request;
-
-define('LARAVEL_START', microtime(true));
-
-if (file_exists($maintenance = __DIR__.'/../medin-camisas-inventory/storage/framework/maintenance.php')) {
-    require $maintenance;
-}
-
-require __DIR__.'/../medin-camisas-inventory/vendor/autoload.php';
-
-/** @var Application $app */
-$app = require_once __DIR__.'/../medin-camisas-inventory/bootstrap/app.php';
-
-$app->handleRequest(Request::capture());
-EOF
+            echo "Create Laravel index.php"
+            printf "%s\n" \
+            "<?php" \
+            "use Illuminate\\Foundation\\Application;" \
+            "use Illuminate\\Http\\Request;" \
+            "define('LARAVEL_START', microtime(true));" \
+            "" \
+            "if (file_exists(\$maintenance = __DIR__.'/../medin-camisas-inventory/storage/framework/maintenance.php')) {" \
+            "    require \$maintenance;" \
+            "}" \
+            "" \
+            "require __DIR__.'/../medin-camisas-inventory/vendor/autoload.php';" \
+            "" \
+            "/** @var Application \$app */" \
+            "\$app = require_once __DIR__.'/../medin-camisas-inventory/bootstrap/app.php';" \
+            "\$app->handleRequest(Request::capture());" \
+            > $PUBLIC_PATH/index.php
 
             echo "Deployment finished"
