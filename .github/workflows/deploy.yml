@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies and build assets
         run: |
-          /usr/bin/php8.4 /usr/local/bin/composer install
+          /opt/alt/php84/usr/bin/php /usr/local/bin/composer install
           npm install
           npm run build
 
@@ -70,7 +70,7 @@ jobs:
           script: |
             cd ${{ secrets.HOSTINGER_PATH }}
             git pull origin main
-            /usr/bin/php8.4 /usr/local/bin/composer install # Explicit PHP 8.4
-            /usr/bin/php8.4 artisan config:cache
-            /usr/bin/php8.4 artisan route:cache
-            /usr/bin/php8.4 artisan view:cache
+            /opt/alt/php84/usr/bin/php /usr/local/bin/composer install
+            /opt/alt/php84/usr/bin/php artisan config:cache
+            /opt/alt/php84/usr/bin/php artisan route:cache
+            /opt/alt/php84/usr/bin/php artisan view:cache
