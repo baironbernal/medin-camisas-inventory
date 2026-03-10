@@ -1,0 +1,76 @@
+name: Deploy to Hostinger (Updated)
+
+on:
+  push:
+    branches:
+      - main  # or 'master' if you use that
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, intl, pdo_mysql
+          tools: composer, npm
+
+      # 🧹 Clean any previous build to prevent nested public/build/public/build
+      - name: Clean old build folder
+        run: rm -rf public/build
+
+      - name: Install dependencies and build assets
+        run: |
+          composer install
+          npm install
+          npm run build
+
+      # 🧪 Debug - Check what files were built
+      - name: Check build folder contents
+        run: ls -R public/build || echo "No build folder found"
+
+      # 🏗️ Ensure target build folder exists on Hostinger
+      - name: Prepare Hostinger build folder
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USER }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p ${{ secrets.HOSTINGER_PATH }}/public/build
+            rm -rf ${{ secrets.HOSTINGER_PATH }}/public/build/*
+
+      # ✅ Upload only 'assets' folder and 'manifest.json'
+      - name: Upload built assets to Hostinger
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USER }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+          source: "public/build/*"
+          target: "${{ secrets.HOSTINGER_PATH }}/public/build"
+          overwrite: true
+          rm: true
+
+      # 🚀 Final deployment commands
+      - name: Deploy to Hostinger
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USER }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ secrets.HOSTINGER_PATH }}
+            git pull origin main
+            composer install
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
