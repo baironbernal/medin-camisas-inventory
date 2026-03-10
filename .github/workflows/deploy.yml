@@ -1,101 +1,50 @@
-name: Deploy to Hostinger (Updated)
+- name: Deploy to Hostinger
+  uses: appleboy/ssh-action@v1.2.0
+  with:
+    host: ${{ secrets.HOSTINGER_HOST }}
+    username: ${{ secrets.HOSTINGER_USER }}
+    port: ${{ secrets.HOSTINGER_PORT }}
+    key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+    script: |
+      DOMAIN_PATH=${{ secrets.HOSTINGER_PATH }}
+      PROJECT_PATH=$DOMAIN_PATH/medin-camisas-inventory
+      PUBLIC_PATH=$DOMAIN_PATH/public_html
 
-on:
-  push:
-    branches:
-      - main
+      echo "Entering project folder"
+      cd $PROJECT_PATH
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+      echo "Pulling latest code"
+      git pull origin main
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      echo "Installing composer dependencies"
+      php /usr/local/bin/composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: mbstring, bcmath, intl, pdo_mysql
-          tools: composer, npm
+      echo "Running Laravel cache commands"
+      php artisan config:cache
+      php artisan route:cache
+      php artisan view:cache
+      php artisan filament:assets
 
-      - name: Clean old build folder
-        run: rm -rf public/build
+      echo "Cleaning public_html"
+      rm -rf $PUBLIC_PATH/*
 
-      - name: Install dependencies and build assets
-        run: |
-          composer install
-          npm install
-          npm run build
+      echo "Copying Laravel public files"
+      cp -r public/* $PUBLIC_PATH/
 
-      - name: Prepare Hostinger build folder
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.HOSTINGER_HOST }}
-          username: ${{ secrets.HOSTINGER_USER }}
-          port: ${{ secrets.HOSTINGER_PORT }}
-          key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
-          script: |
-            mkdir -p ${{ secrets.HOSTINGER_PATH }}/public/build
-            rm -rf ${{ secrets.HOSTINGER_PATH }}/public/build/*
+      echo "Creating .htaccess"
+      cat << 'EOF' > $PUBLIC_PATH/.htaccess
+      <IfModule mod_rewrite.c>
+          RewriteEngine On
+          RewriteCond %{REQUEST_URI} !^/index.php
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^ index.php [L]
+      </IfModule>
+      EOF
 
-      - name: Upload built assets to Hostinger
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOSTINGER_HOST }}
-          username: ${{ secrets.HOSTINGER_USER }}
-          port: ${{ secrets.HOSTINGER_PORT }}
-          key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
-          source: "public/build/*"
-          target: "${{ secrets.HOSTINGER_PATH }}/public/build"
-          overwrite: true
+      echo "Fixing index.php paths"
+      sed -i "s|../vendor/autoload.php|../medin-camisas-inventory/vendor/autoload.php|g" $PUBLIC_PATH/index.php
+      sed -i "s|../bootstrap/app.php|../medin-camisas-inventory/bootstrap/app.php|g" $PUBLIC_PATH/index.php
+      sed -i "s|../storage|../medin-camisas-inventory/storage|g" $PUBLIC_PATH/index.php
 
-      - name: Deploy to Hostinger
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.HOSTINGER_HOST }}
-          username: ${{ secrets.HOSTINGER_USER }}
-          port: ${{ secrets.HOSTINGER_PORT }}
-          key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
-          script: |
-            DOMAIN_PATH=/home/u376898333/domains/deepskyblue-gorilla-748938.hostingersite.com
-            PROJECT_PATH=$DOMAIN_PATH/medin-camisas-inventory
-            PUBLIC_PATH=$DOMAIN_PATH/public_html
-
-            echo "Entering project folder"
-            cd $PROJECT_PATH
-
-            echo "Pulling latest code"
-            git pull origin main
-
-            echo "Installing composer dependencies"
-            php /usr/local/bin/composer install --no-dev --optimize-autoloader --ignore-platform-reqs
-
-            echo "Running Laravel cache commands"
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-
-            echo "Cleaning public_html"
-            rm -rf $PUBLIC_PATH/*
-
-            echo "Copying Laravel public files"
-            cp -r public/* $PUBLIC_PATH/
-
-              cat << 'EOF' > $PUBLIC_PATH/.htaccess
-              <IfModule mod_rewrite.c>
-                  RewriteEngine On
-                  RewriteCond %{REQUEST_URI} !^/index.php
-                  RewriteCond %{REQUEST_FILENAME} !-f
-                  RewriteCond %{REQUEST_FILENAME} !-d
-                  RewriteRule ^ index.php [L]
-              </IfModule>
-              EOF
-
-            echo "Fixing index.php paths"
-            sed -i "s|../vendor/autoload.php|../medin-camisas-inventory/vendor/autoload.php|g" $PUBLIC_PATH/index.php
-            sed -i "s|../bootstrap/app.php|../medin-camisas-inventory/bootstrap/app.php|g" $PUBLIC_PATH/index.php
-            sed -i "s|../storage|../medin-camisas-inventory/storage|g" $PUBLIC_PATH/index.php
-
-            echo "Deployment finished"
+      echo "Deployment finished"
