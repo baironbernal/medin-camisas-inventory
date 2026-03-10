@@ -16,7 +16,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.4'
           extensions: mbstring, bcmath, intl, pdo_mysql
           tools: composer, npm
 
@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies and build assets
         run: |
-          composer install
+          /usr/bin/php8.4 /usr/local/bin/composer install
           npm install
           npm run build
 
@@ -70,7 +70,7 @@ jobs:
           script: |
             cd ${{ secrets.HOSTINGER_PATH }}
             git pull origin main
-            composer install
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+            /usr/bin/php8.4 /usr/local/bin/composer install # Explicit PHP 8.4
+            /usr/bin/php8.4 artisan config:cache
+            /usr/bin/php8.4 artisan route:cache
+            /usr/bin/php8.4 artisan view:cache
