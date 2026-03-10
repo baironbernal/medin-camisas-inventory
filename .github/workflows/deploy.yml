@@ -52,6 +52,7 @@ jobs:
           target: "${{ secrets.HOSTINGER_PATH }}/public/build"
           overwrite: true
 
+           # 🚀 Final deployment commands
       - name: Deploy to Hostinger
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -60,9 +61,11 @@ jobs:
           port: ${{ secrets.HOSTINGER_PORT }}
           key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
           script: |
+            # Entramos a la carpeta del proyecto usando el secreto corregido
             cd ${{ secrets.HOSTINGER_PATH }}
+            
+            # Ahora los comandos sí encontrarán los archivos necesarios
             git pull origin main
-            # Use --ignore-platform-reqs to bypass the PHP 8.2 CLI limit on Hostinger
             php /usr/local/bin/composer install --no-dev --optimize-autoloader --ignore-platform-reqs
             php artisan config:cache
             php artisan route:cache
