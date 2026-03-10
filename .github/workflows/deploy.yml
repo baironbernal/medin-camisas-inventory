@@ -20,9 +20,6 @@ jobs:
           extensions: mbstring, bcmath, intl, pdo_mysql
           tools: composer, npm
 
-      - name: Clean old build folder
-        run: rm -rf public/build
-
       - name: Install dependencies and build assets
         run: |
           composer install
@@ -37,7 +34,7 @@ jobs:
           port: ${{ secrets.HOSTINGER_PORT }}
           key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
           source: "public/build/*"
-          target: "${{ secrets.HOSTINGER_PATH }}/medin-camisas-inventory/public/build"
+          target: "${{ secrets.HOSTINGER_PATH }}/public_html/build"
           overwrite: true
 
       - name: Deploy to Hostinger
@@ -48,6 +45,7 @@ jobs:
           port: ${{ secrets.HOSTINGER_PORT }}
           key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
           script: |
+
             DOMAIN_PATH=${{ secrets.HOSTINGER_PATH }}
             PROJECT_PATH=$DOMAIN_PATH/medin-camisas-inventory
             PUBLIC_PATH=$DOMAIN_PATH/public_html
@@ -61,32 +59,59 @@ jobs:
             echo "Installing composer dependencies"
             php /usr/local/bin/composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-            echo "Running Laravel cache commands"
+            echo "Clearing Laravel cache"
+            php artisan optimize:clear
+
+            echo "Caching Laravel"
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
+
+            echo "Publishing Filament assets"
             php artisan filament:assets
 
-            echo "Cleaning public_html"
-            rm -rf $PUBLIC_PATH/*
+            echo "Fixing permissions"
+            chmod -R 775 storage
+            chmod -R 775 bootstrap/cache
 
-            echo "Copying Laravel public files"
-            cp -r public/* $PUBLIC_PATH/
+            echo "Cleaning public_html except build"
+            find $PUBLIC_PATH -mindepth 1 -maxdepth 1 ! -name build -exec rm -rf {} +
+
+            echo "Copying Laravel public files except build"
+            rsync -av --exclude=build public/ $PUBLIC_PATH/
 
             echo "Creating .htaccess"
             cat << 'EOF' > $PUBLIC_PATH/.htaccess
-            <IfModule mod_rewrite.c>
-                RewriteEngine On
-                RewriteCond %{REQUEST_URI} !^/index.php
-                RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteCond %{REQUEST_FILENAME} !-d
-                RewriteRule ^ index.php [L]
-            </IfModule>
-            EOF
+<IfModule mod_rewrite.c>
+    RewriteEngine On
 
-            echo "Fixing index.php paths"
-            sed -i "s|../vendor/autoload.php|../medin-camisas-inventory/vendor/autoload.php|g" $PUBLIC_PATH/index.php
-            sed -i "s|../bootstrap/app.php|../medin-camisas-inventory/bootstrap/app.php|g" $PUBLIC_PATH/index.php
-            sed -i "s|../storage|../medin-camisas-inventory/storage|g" $PUBLIC_PATH/index.php
+    RewriteCond %{REQUEST_URI} !^/index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    RewriteRule ^ index.php [L]
+</IfModule>
+EOF
+
+            echo "Creating correct Laravel index.php"
+            cat << 'EOF' > $PUBLIC_PATH/index.php
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
+
+define('LARAVEL_START', microtime(true));
+
+if (file_exists($maintenance = __DIR__.'/../medin-camisas-inventory/storage/framework/maintenance.php')) {
+    require $maintenance;
+}
+
+require __DIR__.'/../medin-camisas-inventory/vendor/autoload.php';
+
+/** @var Application $app */
+$app = require_once __DIR__.'/../medin-camisas-inventory/bootstrap/app.php';
+
+$app->handleRequest(Request::capture());
+EOF
 
             echo "Deployment finished"
