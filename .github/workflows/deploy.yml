@@ -64,6 +64,10 @@ jobs:
             php artisan route:cache
             php artisan view:cache
 
+            echo "Run migrations"
+            php artisan migrate --force
+            php artisan db:seed
+
             echo "Filament assets"
             php artisan filament:assets
 
