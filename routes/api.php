@@ -19,6 +19,7 @@ Route::resource('/attributes',AttributeController::class);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('/discount-rules', [DiscountRuleController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/checkout', [CartController::class, 'checkout']);

@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             InventorySeeder::class,
             MovementSeeder::class,
+            DiscountRuleSeeder::class,
         ]);
     }
 }

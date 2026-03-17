@@ -59,6 +59,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_seasons',
             'manage_categories',
             'manage_attributes',
+
+            //Rules
+            'view_discount_rules',
+            'create_discount_rules',
+            'edit_discount_rules',
+            'update_discount_rules',
+            'delete_discount_rules',
         ];
 
         foreach ($permissions as $permission) {
@@ -96,6 +103,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'export_reports',
             'manage_categories',
             'manage_attributes',
+            'view_discount_rules',
+            'create_discount_rules',
+            'edit_discount_rules',
+            'update_discount_rules',
+            'delete_discount_rules',
         ]);
 
         // Store Supervisor - Manage single store
