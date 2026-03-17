@@ -47,7 +47,12 @@ jobs:
           script: |
             DOMAIN_PATH=${{ secrets.HOSTINGER_PATH }}
             PROJECT_PATH=$DOMAIN_PATH/medin-camisas-inventory
+            
+            echo "Domain path: " $DOMAIN_PATH
+            echo "Project path: " $PROJECT_PATH
+            
             PUBLIC_PATH=$DOMAIN_PATH/public_html
+            echo "Public path: " $PUBLIC_PATH
 
             echo "Entering project folder"
             cd $PROJECT_PATH
