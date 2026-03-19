@@ -31,7 +31,8 @@ class CartService
             ->get()
             ->keyBy('id');
 
-        $subtotal = 0;
+        $subtotal_original = 0;
+        $subtotal_discounted = 0;
         $lineItems = [];
 
         foreach ($items as $item) {
@@ -55,13 +56,43 @@ class CartService
                 );
             }
 
-            $price     = $variant->calculatePrice();
-            $subtotal += $price * $quantity;
+            // The frontend can send both original and discounted pricing.
+            // If any of them is missing, we fallback to the calculated original price.
+            $unitPriceOriginal = isset($item['unit_price']) && $item['unit_price'] !== null
+                ? (float) $item['unit_price']
+                : (float) $variant->calculatePrice();
+
+            $totalPriceOriginal = isset($item['total_price']) && $item['total_price'] !== null
+                ? (float) $item['total_price']
+                : ($unitPriceOriginal * $quantity);
+
+            $discountRuleId = $item['discount_rule_id'] ?? null;
+            $discountPercentage = $item['discount_percentage'] ?? null;
+
+            $unitPriceDiscounted = isset($item['discounted_unit_price']) && $item['discounted_unit_price'] !== null
+                ? (float) $item['discounted_unit_price']
+                : (
+                    is_numeric($discountPercentage)
+                        ? ($unitPriceOriginal * (1 - ((float) $discountPercentage / 100)))
+                        : $unitPriceOriginal
+                );
+
+            $totalPriceDiscounted = isset($item['discounted_total_price']) && $item['discounted_total_price'] !== null
+                ? (float) $item['discounted_total_price']
+                : ($unitPriceDiscounted * $quantity);
+
+            $subtotal_original += $totalPriceOriginal;
+            $subtotal_discounted += $totalPriceDiscounted;
 
             $lineItems[] = [
                 'variant'   => $variant,
                 'quantity'  => $quantity,
-                'price'     => $price,
+                'unit_price_original' => $unitPriceOriginal,
+                'total_price_original' => $totalPriceOriginal,
+                'discount_rule_id' => $discountRuleId,
+                'discount_percentage' => $discountPercentage,
+                'unit_price_discounted' => $unitPriceDiscounted,
+                'total_price_discounted' => $totalPriceDiscounted,
             ];
         }
 
@@ -70,10 +101,12 @@ class CartService
             'user_id'        => $userId,
             'order_number'   => Order::generateOrderNumber(),
             'status'         => Order::STATUS_PENDING,
-            'subtotal'       => round($subtotal, 2),
+            'subtotal_original' => round($subtotal_original, 2),
+            'subtotal_discounted' => round($subtotal_discounted, 2),
+            'subtotal'       => round($subtotal_discounted, 2),
             'tax'            => 0,
             'shipping_cost'  => 0,
-            'total'          => round($subtotal, 2),
+            'total'          => round($subtotal_discounted, 2),
             'currency'       => 'COP',
             'customer_email' => $customerData['customer_email'] ?? null,
             'customer_name'  => $customerData['customer_name']  ?? null,
@@ -86,7 +119,12 @@ class CartService
             /** @var ProductVariant $variant */
             $variant  = $line['variant'];
             $quantity = $line['quantity'];
-            $price    = $line['price'];
+            $unitPriceOriginal = $line['unit_price_original'];
+            $totalPriceOriginal = $line['total_price_original'];
+            $discountRuleId = $line['discount_rule_id'];
+            $discountPercentage = $line['discount_percentage'];
+            $unitPriceDiscounted = $line['unit_price_discounted'];
+            $totalPriceDiscounted = $line['total_price_discounted'];
 
             OrderItem::create([
                 'order_id'           => $order->id,
@@ -94,8 +132,12 @@ class CartService
                 'product_name'       => $variant->product->name,
                 'variant_sku'        => $variant->sku,
                 'quantity'           => $quantity,
-                'unit_price'         => $price,
-                'total_price'        => $price * $quantity,
+                'unit_price'         => $unitPriceOriginal,
+                'total_price'        => $totalPriceOriginal,
+                'discount_rule_id'  => $discountRuleId,
+                'discount_percentage'=> $discountPercentage,
+                'discounted_unit_price' => $unitPriceDiscounted,
+                'discounted_total_price'=> $totalPriceDiscounted,
             ]);
 
             // Deduct stock from the first inventory record for this variant
@@ -114,8 +156,8 @@ class CartService
                     'quantity'           => $quantity,
                     'quantity_before'    => $before,
                     'quantity_after'     => $after,
-                    'unit_cost'          => $price,
-                    'total_cost'         => $price * $quantity,
+                    'unit_cost'          => $unitPriceDiscounted,
+                    'total_cost'         => $totalPriceDiscounted,
                     'reference_document' => $order->order_number,
                     'user_id'            => $userId,
                     'notes'              => "Venta — Orden {$order->order_number}",

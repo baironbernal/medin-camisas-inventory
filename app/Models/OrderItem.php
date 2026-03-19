@@ -17,12 +17,19 @@ class OrderItem extends Model
         'variant_sku',
         'quantity',
         'unit_price',
+        'discount_rule_id',
+        'discount_percentage',
+        'discounted_unit_price',
         'total_price',
+        'discounted_total_price',
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
+        'discount_percentage' => 'decimal:2',
+        'discounted_unit_price' => 'decimal:2',
         'total_price' => 'decimal:2',
+        'discounted_total_price' => 'decimal:2',
         'quantity' => 'integer',
     ];
 

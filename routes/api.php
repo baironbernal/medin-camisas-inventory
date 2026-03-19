@@ -2,11 +2,11 @@
 
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DiscountRuleController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DiscountRuleController;
-use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Route;
 
 Route::resource('/products',ProductController::class);

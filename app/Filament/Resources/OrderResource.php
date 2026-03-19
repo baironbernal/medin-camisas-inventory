@@ -62,8 +62,12 @@ class OrderResource extends Resource
 
                 Forms\Components\Section::make('Totales')
                     ->schema([
-                        Forms\Components\TextInput::make('subtotal')
-                            ->label('Subtotal')
+                        Forms\Components\TextInput::make('subtotal_original')
+                            ->label('Subtotal original')
+                            ->disabled()
+                            ->prefix('$'),
+                        Forms\Components\TextInput::make('subtotal_discounted')
+                            ->label('Subtotal con descuento')
                             ->disabled()
                             ->prefix('$'),
                         Forms\Components\TextInput::make('tax')
