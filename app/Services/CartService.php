@@ -13,10 +13,8 @@ class CartService
     /**
      * Create an order directly from a list of items sent by the frontend.
      *
-     * @param  array  $items        [['product_variant_id' => int, 'quantity' => int], ...]
-     * @param  array  $customerData ['customer_name', 'customer_email', 'customer_phone', 'notes']
-     * @param  int|null $userId
-     * @return Order
+     * @param  array  $items  [['product_variant_id' => int, 'quantity' => int], ...]
+     * @param  array  $customerData  ['customer_name', 'customer_email', 'customer_phone', 'notes']
      */
     public function createOrderFromItems(array $items, array $customerData, ?int $userId = null): Order
     {
@@ -26,7 +24,7 @@ class CartService
 
         // ── 1. Load variants with inventories and validate stock ──────────────
         $variantIds = array_column($items, 'product_variant_id');
-        $variants   = ProductVariant::with(['product', 'inventories'])
+        $variants = ProductVariant::with(['product', 'inventories'])
             ->whereIn('id', $variantIds)
             ->get()
             ->keyBy('id');
@@ -37,15 +35,15 @@ class CartService
 
         foreach ($items as $item) {
             $variantId = $item['product_variant_id'];
-            $quantity  = (int) $item['quantity'];
+            $quantity = (int) $item['quantity'];
 
             $variant = $variants->get($variantId);
 
-            if (!$variant) {
+            if (! $variant) {
                 throw new \Exception("Producto con ID {$variantId} no encontrado.");
             }
 
-            if (!$variant->is_active) {
+            if (! $variant->is_active) {
                 throw new \Exception("El producto '{$variant->sku}' ya no está disponible.");
             }
 
@@ -85,8 +83,8 @@ class CartService
             $subtotal_discounted += $totalPriceDiscounted;
 
             $lineItems[] = [
-                'variant'   => $variant,
-                'quantity'  => $quantity,
+                'variant' => $variant,
+                'quantity' => $quantity,
                 'unit_price_original' => $unitPriceOriginal,
                 'total_price_original' => $totalPriceOriginal,
                 'discount_rule_id' => $discountRuleId,
@@ -98,26 +96,27 @@ class CartService
 
         // ── 2. Create the Order ───────────────────────────────────────────────
         $order = Order::create([
-            'user_id'        => $userId,
-            'order_number'   => Order::generateOrderNumber(),
-            'status'         => Order::STATUS_PENDING,
+            'user_id' => $userId,
+            'order_number' => Order::generateOrderNumber(),
+            'status' => Order::STATUS_PENDING,
             'subtotal_original' => round($subtotal_original, 2),
             'subtotal_discounted' => round($subtotal_discounted, 2),
-            'subtotal'       => round($subtotal_discounted, 2),
-            'tax'            => 0,
-            'shipping_cost'  => 0,
-            'total'          => round($subtotal_discounted, 2),
-            'currency'       => 'COP',
+            'subtotal' => round($subtotal_discounted, 2),
+            'tax' => 0,
+            'shipping_cost' => 0,
+            'total' => round($subtotal_discounted, 2),
+            'currency' => 'COP',
             'customer_email' => $customerData['customer_email'] ?? null,
-            'customer_name'  => $customerData['customer_name']  ?? null,
+            'customer_name' => $customerData['customer_name'] ?? null,
             'customer_phone' => $customerData['customer_phone'] ?? null,
-            'notes'          => $customerData['notes']          ?? null,
+            'shipping_address' => $customerData['shipping_address'] ?? null,
+            'notes' => $customerData['notes'] ?? null,
         ]);
 
         // ── 3. Create OrderItems + deduct Inventory + register Movements ──────
         foreach ($lineItems as $line) {
             /** @var ProductVariant $variant */
-            $variant  = $line['variant'];
+            $variant = $line['variant'];
             $quantity = $line['quantity'];
             $unitPriceOriginal = $line['unit_price_original'];
             $totalPriceOriginal = $line['total_price_original'];
@@ -127,41 +126,41 @@ class CartService
             $totalPriceDiscounted = $line['total_price_discounted'];
 
             OrderItem::create([
-                'order_id'           => $order->id,
+                'order_id' => $order->id,
                 'product_variant_id' => $variant->id,
-                'product_name'       => $variant->product->name,
-                'variant_sku'        => $variant->sku,
-                'quantity'           => $quantity,
-                'unit_price'         => $unitPriceOriginal,
-                'total_price'        => $totalPriceOriginal,
-                'discount_rule_id'  => $discountRuleId,
-                'discount_percentage'=> $discountPercentage,
+                'product_name' => $variant->product->name,
+                'variant_sku' => $variant->sku,
+                'quantity' => $quantity,
+                'unit_price' => $unitPriceOriginal,
+                'total_price' => $totalPriceOriginal,
+                'discount_rule_id' => $discountRuleId,
+                'discount_percentage' => $discountPercentage,
                 'discounted_unit_price' => $unitPriceDiscounted,
-                'discounted_total_price'=> $totalPriceDiscounted,
+                'discounted_total_price' => $totalPriceDiscounted,
             ]);
 
             // Deduct stock from the first inventory record for this variant
             $inventory = $variant->inventories->first();
             if ($inventory) {
                 $before = $inventory->quantity_available;
-                $after  = max(0, $before - $quantity);
+                $after = max(0, $before - $quantity);
 
                 $inventory->decrement('quantity_available', $quantity);
 
                 Movement::create([
-                    'type'               => Movement::TYPE_SALE,
+                    'type' => Movement::TYPE_SALE,
                     'product_variant_id' => $variant->id,
-                    'inventory_id'       => $inventory->id,
-                    'store_id'           => $inventory->store_id,
-                    'quantity'           => $quantity,
-                    'quantity_before'    => $before,
-                    'quantity_after'     => $after,
-                    'unit_cost'          => $unitPriceDiscounted,
-                    'total_cost'         => $totalPriceDiscounted,
+                    'inventory_id' => $inventory->id,
+                    'store_id' => $inventory->store_id,
+                    'quantity' => $quantity,
+                    'quantity_before' => $before,
+                    'quantity_after' => $after,
+                    'unit_cost' => $unitPriceDiscounted,
+                    'total_cost' => $totalPriceDiscounted,
                     'reference_document' => $order->order_number,
-                    'user_id'            => $userId,
-                    'notes'              => "Venta — Orden {$order->order_number}",
-                    'metadata'           => ['order_id' => $order->id],
+                    'user_id' => $userId,
+                    'notes' => "Venta — Orden {$order->order_number}",
+                    'metadata' => ['order_id' => $order->id],
                 ]);
             }
         }

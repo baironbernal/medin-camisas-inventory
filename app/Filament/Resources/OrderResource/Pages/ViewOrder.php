@@ -19,6 +19,11 @@ class ViewOrder extends ViewRecord
     {
         return [
             Actions\EditAction::make(),
+            Actions\Action::make('imprimir')
+                ->label('Imprimir Orden')
+                ->icon('heroicon-o-printer')
+                ->url(fn ($record) => route('orders.print-packing-slip', $record))
+                ->openUrlInNewTab(),
         ];
     }
 

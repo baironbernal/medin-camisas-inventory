@@ -41,6 +41,20 @@ class Product extends Model implements HasMedia
         'specifications' => 'array',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::updated(function ($product) {
+            if ($product->isDirty('base_price') || $product->isDirty('cost')) {
+                $product->variants()->update([
+                    'price' => $product->base_price,
+                    'cost' => $product->cost,
+                ]);
+            }
+        });
+    }
+
     public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()
@@ -83,7 +97,7 @@ class Product extends Model implements HasMedia
         return $this->variants()
             ->with('inventories')
             ->get()
-            ->sum(fn($variant) => $variant->inventories->sum('quantity_available'));
+            ->sum(fn ($variant) => $variant->inventories->sum('quantity_available'));
     }
 
     public function getVariantCountAttribute(): int
@@ -97,5 +111,3 @@ class Product extends Model implements HasMedia
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
     }
 }
-
-
