@@ -13,6 +13,17 @@ class ProductVariant extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function (self $variant) {
+            $variant->inventories()->delete();
+            $variant->variantAttributes()->delete();
+            $variant->movements()->delete();
+        });
+    }
+
     protected $fillable = [
         'sku',
         'product_id',
@@ -68,7 +79,7 @@ class ProductVariant extends Model implements HasMedia
         return $this->variantAttributes()
             ->with(['attribute', 'attributeValue'])
             ->get()
-            ->map(fn($va) => $va->attributeValue->value)
+            ->map(fn ($va) => $va->attributeValue->value)
             ->join(' - ');
     }
 
@@ -78,7 +89,7 @@ class ProductVariant extends Model implements HasMedia
         $attributes = $this->variantAttributes()
             ->with('attributeValue')
             ->get()
-            ->map(fn($va) => $va->attributeValue->code)
+            ->map(fn ($va) => $va->attributeValue->code)
             ->join('-');
 
         return strtoupper("{$productCode}-{$attributes}");
@@ -122,7 +133,7 @@ class ProductVariant extends Model implements HasMedia
 
     private function matchesRule(PriceRule $rule): bool
     {
-        if (!$rule->attribute_id || !$rule->attribute_value_id) {
+        if (! $rule->attribute_id || ! $rule->attribute_value_id) {
             return true;
         }
 
@@ -138,5 +149,3 @@ class ProductVariant extends Model implements HasMedia
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
     }
 }
-
-

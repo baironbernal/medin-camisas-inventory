@@ -42,6 +42,26 @@ class Attribute extends Model
     {
         return $query->orderBy('sort_order')->orderBy('name');
     }
+
+    public function scopeByCode($query, string $code)
+    {
+        return $query->where('code', $code);
+    }
+
+    public function scopeSize($query)
+    {
+        return $query->where('code', 'SIZE');
+    }
+
+    public function scopeColor($query)
+    {
+        return $query->where('code', 'COLOR');
+    }
+
+    public function scopeMaterial($query)
+    {
+        return $query->where('code', 'MATERIAL');
+    }
 }
 
 

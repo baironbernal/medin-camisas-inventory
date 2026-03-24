@@ -23,7 +23,6 @@ class Product extends Model implements HasMedia
         'season_id',
         'category_id',
         'base_price',
-        'cost',
         'brand',
         'supplier',
         'is_active',
@@ -34,7 +33,6 @@ class Product extends Model implements HasMedia
 
     protected $casts = [
         'base_price' => 'decimal:2',
-        'cost' => 'decimal:2',
         'is_active' => 'boolean',
         'images' => 'json',
         'tags' => 'array',
@@ -46,10 +44,9 @@ class Product extends Model implements HasMedia
         parent::boot();
 
         static::updated(function ($product) {
-            if ($product->isDirty('base_price') || $product->isDirty('cost')) {
+            if ($product->isDirty('base_price')) {
                 $product->variants()->update([
                     'price' => $product->base_price,
-                    'cost' => $product->cost,
                 ]);
             }
         });

@@ -60,11 +60,6 @@ class ProductResource extends Resource
                             ->required()
                             ->numeric()
                             ->prefix('$'),
-                        Forms\Components\TextInput::make('cost')
-                            ->label('Costo')
-                            ->required()
-                            ->numeric()
-                            ->prefix('$'),
                         Forms\Components\TextInput::make('brand')
                             ->label('Marca')
                             ->maxLength(255),

@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('season_id')->constrained('seasons');
             $table->foreignId('category_id')->constrained('categories');
             $table->decimal('base_price', 10, 2);
-            $table->decimal('cost', 10, 2);
             $table->string('brand')->nullable();
             $table->string('supplier')->nullable();
             $table->boolean('is_active')->default(true);
