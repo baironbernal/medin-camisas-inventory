@@ -9,8 +9,6 @@ class DiscountRuleSeeder extends Seeder
 {
     public function run(): void
     {
-        DiscountRule::truncate();
-
         // 🔹 EXACT QUANTITY RULES (1 - 5)
 
         DiscountRule::create([
