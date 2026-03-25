@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
+use App\Models\Category;
 use App\Models\Product;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -44,12 +45,20 @@ class ProductResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload(),
+                        Forms\Components\Select::make('parent_id')
+                            ->label('Categoría padre')
+                            ->options(
+                                Category::whereNull('parent_id')->pluck('name', 'id')
+                            )
+                            ->reactive()
+                            ->afterStateUpdated(fn (callable $set) => $set('category_id', null))
+                            ->required(),
                         Forms\Components\Select::make('category_id')
                             ->label('Categoría')
-                            ->relationship('category', 'name')
+                            ->options(fn (callable $get) => Category::where('parent_id', $get('parent_id'))->pluck('name', 'id'))
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
                     ])
                     ->columns(2),
 

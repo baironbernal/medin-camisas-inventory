@@ -13,6 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class VariantsRelationManager extends RelationManager
@@ -94,6 +95,9 @@ class VariantsRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('sku')
+            ->modifyQueryUsing(
+                fn (Builder $query) => $query->with(['inventories.store'])
+            )
             ->columns([
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')
@@ -108,21 +112,16 @@ class VariantsRelationManager extends RelationManager
                         ->map(fn ($va) => "{$va->attribute->name}: {$va->attributeValue->value}")
                         ->join(' | ')),
 
-                Tables\Columns\TextColumn::make('price')
-                    ->label('Precio')
-                    ->money('COP')
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('cost')
                     ->label('Costo')
                     ->money('COP')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('total_stock')
-                    ->label('Stock Total')
-                    ->getStateUsing(fn ($record) => $record->inventories->sum('quantity_available'))
-                    ->badge()
-                    ->color(fn ($state): string => $state > 50 ? 'success' : ($state > 0 ? 'warning' : 'danger')),
+                // ── Inline stock editor (Livewire component per row) ──────────
+                Tables\Columns\ViewColumn::make('inline_stock')
+                    ->label('Stock por Tienda')
+                    ->view('filament.tables.columns.inline-stock-column')
+                    ->grow(false),
 
                 Tables\Columns\TextColumn::make('barcode')
                     ->label('Código de Barras')
