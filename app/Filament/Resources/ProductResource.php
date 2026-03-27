@@ -6,6 +6,7 @@ use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Category;
 use App\Models\Product;
+use CodeWithDennis\FilamentSelectTree\SelectTree;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -20,7 +21,7 @@ class ProductResource extends Resource
 
     protected static ?string $navigationGroup = 'Gestión de Productos';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $navigationLabel = 'Productos';
 
@@ -45,20 +46,18 @@ class ProductResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload(),
-                        Forms\Components\Select::make('parent_id')
-                            ->label('Categoría padre')
-                            ->options(
-                                Category::whereNull('parent_id')->pluck('name', 'id')
-                            )
-                            ->reactive()
-                            ->afterStateUpdated(fn (callable $set) => $set('category_id', null))
-                            ->required(),
-                        Forms\Components\Select::make('category_id')
+                       SelectTree::make('category_id')
                             ->label('Categoría')
-                            ->options(fn (callable $get) => Category::where('parent_id', $get('parent_id'))->pluck('name', 'id'))
-                            ->required()
-                            ->searchable()
-                            ->preload()
+                            ->withCount()
+                            ->expandSelected(true)
+                            ->relationship(
+                                relationship: 'category',      // La relación BelongsTo en tu modelo Category
+                                titleAttribute: 'name',       // La columna que se mostrará (nombre de la categoría)
+                                parentAttribute: 'parent_id'  // La columna que apunta al padre
+                            )
+                            ->enableBranchNode() // Permite seleccionar categorías que tienen hijos dentro
+                            ->searchable()       // Por si tienes muchas categorías
+                            ->placeholder('Selecciona una categoría padre'),
                     ])
                     ->columns(2),
 
