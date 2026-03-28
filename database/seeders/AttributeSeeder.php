@@ -62,9 +62,9 @@ class AttributeSeeder extends Seeder
         $colors = [
             ['value' => 'Negro', 'code' => 'BLK', 'hex' => '#000000'],
             ['value' => 'Blanco', 'code' => 'WHT', 'hex' => '#FFFFFF'],
-            ['value' => 'Azul', 'code' => 'BLU', 'hex' => '#0000FF'],
-            ['value' => 'Rojo', 'code' => 'RED', 'hex' => '#FF0000'],
-            ['value' => 'Verde', 'code' => 'GRN', 'hex' => '#00FF00'],
+            ['value' => 'Azul', 'code' => 'BLU', 'hex' => '#1d5caa'],
+            ['value' => 'Rojo', 'code' => 'RED', 'hex' => '#e52824'],
+            ['value' => 'Verde', 'code' => 'GRN', 'hex' => '#008000'],
             ['value' => 'Gris', 'code' => 'GRY', 'hex' => '#808080'],
             ['value' => 'Navy', 'code' => 'NVY', 'hex' => '#000080'],
             ['value' => 'Beige', 'code' => 'BGE', 'hex' => '#F5F5DC'],
