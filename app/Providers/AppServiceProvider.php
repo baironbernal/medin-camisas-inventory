@@ -12,8 +12,6 @@ use App\Policies\InventoryPolicy;
 use App\Policies\MovementPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\StorePolicy;
-use Illuminate\Database\SQLiteConnection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,10 +30,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (DB::connection() instanceof SQLiteConnection) {
-            DB::statement('PRAGMA foreign_keys = ON');
-        }
-
         Gate::policy(Product::class, ProductPolicy::class);
         Gate::policy(Inventory::class, InventoryPolicy::class);
         Gate::policy(Movement::class, MovementPolicy::class);
