@@ -21,7 +21,7 @@ return new class extends Migration
       return;
     }
 
-    $sizes = ['Única', '10', '12', '14', '16', '18', '20'];
+    $sizes = [['code' => 'UNICA', 'value' => 'Única'], ['code' => 'DIEZ', 'value' => '10'], ['code' => 'DOCE', 'value' => '12'], ['code' => 'CATORCE', 'value' => '14'], ['code' => 'DIECISEIS', 'value' => '16'], ['code' => 'DIECIOCHO', 'value' => '18'], ['code' => 'VEINTE', 'value' => '20']];
 
     foreach ($sizes as $index => $sizeValue) {
         // Corrección 2: Usar updateOrCreate para que puedas re-ejecutar 
@@ -29,6 +29,7 @@ return new class extends Migration
         AttributeValue::updateOrCreate(
             [
                 'attribute_id' => $sizeAttribute->id,
+                'code' => $sizeValue,
                 'value' => $sizeValue,
             ],
             [
