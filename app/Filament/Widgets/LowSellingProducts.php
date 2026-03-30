@@ -20,8 +20,8 @@ class LowSellingProducts extends BaseWidget
     {
         return $table
             ->query(
-                OrderItem::select('product_name')
-                    ->selectRaw('SUM(quantity) as total_quantity, SUM(total_price) as total_revenue')
+                OrderItem::query()->select('product_name')
+                    ->selectRaw('MAX(order_items.id) as id, SUM(quantity) as total_quantity, SUM(total_price) as total_revenue')
                     ->join('orders', 'order_items.order_id', '=', 'orders.id')
                     ->groupBy('product_name')
                     ->orderBy('total_quantity')
