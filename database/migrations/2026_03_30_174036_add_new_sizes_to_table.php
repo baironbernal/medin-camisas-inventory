@@ -44,7 +44,7 @@ return new class extends Migration
 
         $type = Attribute::where('code', 'TYPE')->first();
         if ($type) {
-            $type->attributeValues()->delete();
+            $type->variantAttributes()->delete();
             $type->delete();
         }
     }
