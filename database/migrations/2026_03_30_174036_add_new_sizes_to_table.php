@@ -13,37 +13,40 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Corrección 1: Usar where() para buscar por columna 'code'
-    $sizeAttribute = Attribute::where('code', 'SIZE')->first();
+        $sizeAttribute = Attribute::where('code', 'SIZE')->first();
 
-    // Si no existe, lo creamos para evitar el error de Integrity Constraint
     if (!$sizeAttribute) {
-      return;
+        return;
     }
 
-    $sizes = [['code' => 'UNICA', 'value' => 'Única'], ['code' => 'DIEZ', 'value' => '10'], ['code' => 'DOCE', 'value' => '12'], ['code' => 'CATORCE', 'value' => '14'], ['code' => 'DIECISEIS', 'value' => '16'], ['code' => 'DIECIOCHO', 'value' => '18'], ['code' => 'VEINTE', 'value' => '20']];
+    $sizes = [
+        ['code' => 'UNICA', 'value' => 'Única'], 
+        ['code' => 'DIEZ', 'value' => '10'], 
+        ['code' => 'DOCE', 'value' => '12'], 
+        ['code' => 'CATORCE', 'value' => '14'], 
+        ['code' => 'DIECISEIS', 'value' => '16'], 
+        ['code' => 'DIECIOCHO', 'value' => '18'], 
+        ['code' => 'VEINTE', 'value' => '20']
+    ];
 
-    foreach ($sizes as $index => $sizeValue) {
-        // Corrección 2: Usar updateOrCreate para que puedas re-ejecutar 
-        // la migración sin que explote por valores duplicados.
+    foreach ($sizes as $index => $sizeData) { // Cambié el nombre a $sizeData para mayor claridad
         AttributeValue::updateOrCreate(
             [
                 'attribute_id' => $sizeAttribute->id,
-                'code' => $sizeValue,
-                'value' => $sizeValue,
+                'code'         => $sizeData['code'],  // <--- Acceder a la llave 'code'
             ],
             [
-                'sort_order' => $index + 1,
+                'value'        => $sizeData['value'], // <--- Acceder a la llave 'value'
+                'sort_order'   => $index + 1,
             ]
         );
     }
 
-    // Corrección 3: Buscar el atributo 'TYPE' de forma segura antes de borrar
-    $type = Attribute::where('code', 'TYPE')->first();
-    if ($type) {
-        $type->attributeValues()->delete();
-        $type->delete();
-    }
+        $type = Attribute::where('code', 'TYPE')->first();
+        if ($type) {
+            $type->attributeValues()->delete();
+            $type->delete();
+        }
     }
 
     /**
