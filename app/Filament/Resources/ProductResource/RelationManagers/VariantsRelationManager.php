@@ -98,6 +98,8 @@ class VariantsRelationManager extends RelationManager
             ->modifyQueryUsing(
                 fn (Builder $query) => $query->with(['inventories.store'])
             )
+            ->recordUrl(null)
+            ->recordAction(null)
             ->columns([
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')

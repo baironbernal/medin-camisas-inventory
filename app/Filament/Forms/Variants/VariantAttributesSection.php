@@ -48,7 +48,8 @@ class VariantAttributesSection
                         ->pluck('value', 'id')
                         ->toArray() ?? [])
                     ->reactive()
-                    ->required(),
+                    ->required(fn (Forms\Get $get) => ! $get('other_color'))
+                    ->hidden(fn (Forms\Get $get) => $get('other_color')),
 
                 Forms\Components\Toggle::make('other_color')
                     ->label('Otro color (especificar)')
@@ -57,6 +58,7 @@ class VariantAttributesSection
                 Forms\Components\TextInput::make('other_color_value')
                     ->label('Nombre del Color')
                     ->visible(fn (Forms\Get $get) => $get('other_color'))
+                    ->required(fn (Forms\Get $get) => $get('other_color'))
                     ->reactive(),
 
                 Forms\Components\ColorPicker::make('other_color_hex')
@@ -74,7 +76,8 @@ class VariantAttributesSection
                         ->pluck('value', 'id')
                         ->toArray() ?? [])
                     ->reactive()
-                    ->required(),
+                    ->required(fn (Forms\Get $get) => ! $get('other_material'))
+                    ->hidden(fn (Forms\Get $get) => $get('other_material')),
 
                 Forms\Components\Toggle::make('other_material')
                     ->label('Otro material (especificar)')
@@ -83,6 +86,7 @@ class VariantAttributesSection
                 Forms\Components\TextInput::make('other_material_value')
                     ->label('Nuevo Material')
                     ->visible(fn (Forms\Get $get) => $get('other_material'))
+                    ->required(fn (Forms\Get $get) => $get('other_material'))
                     ->reactive(),
 
                 // ── Readiness indicator ─────────────────────────────────────
