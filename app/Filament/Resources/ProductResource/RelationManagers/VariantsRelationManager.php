@@ -109,7 +109,9 @@ class VariantsRelationManager extends RelationManager
                     ->getStateUsing(fn ($record) => $record->variantAttributes()
                         ->with(['attribute', 'attributeValue'])
                         ->get()
-                        ->map(fn ($va) => "{$va->attribute->name}: {$va->attributeValue->value}")
+                        ->map(fn ($va) => 
+                           $va->attribute->name && $va->attributeValue->value ? "{$va->attribute->name}: {$va->attributeValue->value}" : null)
+                        ->filter()
                         ->join(' | ')),
 
                 Tables\Columns\TextColumn::make('cost')

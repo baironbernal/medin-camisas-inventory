@@ -92,19 +92,19 @@ class ProductResource extends Resource
                             ->default(true),
 
                             Forms\Components\FileUpload::make('images')
-                            ->label('Fotos')
+                            ->label('Foto principal y foto de tela')
                             ->image()
                             ->multiple()
                             ->disk('public')
                             ->directory('products/images')
                             ->visibility('public')
-                            ->maxFiles(20)
-                            ->maxSize(5120) // 5MB
+                            ->maxFiles(2)
+                            ->maxSize(1120) // 5MB
                             ->imageEditor()
                             ->reorderable()
                             ->panelLayout('grid')
                             ->uploadingMessage('Subiendo fotos...')
-                            ->helperText('Máximo 10 imágenes, 5MB cada una'),
+                            ->helperText('Máximo 2 imágenes, menos de 1MB cada una'),
 
                     ]),
             ]);

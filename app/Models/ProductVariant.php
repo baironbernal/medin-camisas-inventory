@@ -18,9 +18,10 @@ class ProductVariant extends Model implements HasMedia
         parent::boot();
 
         static::deleting(function (self $variant) {
+            $variant->movements()->delete();
             $variant->inventories()->delete();
             $variant->variantAttributes()->delete();
-            $variant->movements()->delete();
+            $variant->clearMediaCollection('variant-images');
         });
     }
 

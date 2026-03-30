@@ -11,6 +11,15 @@ class Inventory extends Model
 {
     use HasFactory;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function (self $inventory) {
+            $inventory->movements()->delete();
+        });
+    }
+
     protected $fillable = [
         'product_variant_id',
         'store_id',
@@ -65,7 +74,7 @@ class Inventory extends Model
 
     public function getIsLowStockAttribute(): bool
     {
-        if (!$this->min_quantity) {
+        if (! $this->min_quantity) {
             return false;
         }
 
@@ -74,7 +83,7 @@ class Inventory extends Model
 
     public function getIsOverstockedAttribute(): bool
     {
-        if (!$this->max_quantity) {
+        if (! $this->max_quantity) {
             return false;
         }
 
@@ -93,5 +102,3 @@ class Inventory extends Model
             ->whereColumn('quantity_available', '<=', 'reorder_point');
     }
 }
-
-

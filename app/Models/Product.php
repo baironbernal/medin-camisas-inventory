@@ -50,6 +50,12 @@ class Product extends Model implements HasMedia
                 ]);
             }
         });
+
+        static::deleting(function (self $product) {
+            $product->variants()->get()->each->delete();
+            $product->priceRules()->delete();
+            $product->clearMediaCollection('product-images');
+        });
     }
 
     public function getSlugOptions(): SlugOptions
