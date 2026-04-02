@@ -1,8 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\DiscountRuleController;
+use App\Http\Controllers\Api\DiscountRuleController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AuthController;
@@ -17,10 +18,13 @@ Route::resource('/categories',CategoryController::class);
 
 Route::resource('/attributes',AttributeController::class);
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register'])->name('register');
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/discount-rules', [DiscountRuleController::class, 'index']);
+
+// Wompi calls this — no auth, signature verified inside the controller
+Route::post('/webhooks/wompi', [PaymentController::class, 'handleWebhook']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/checkout', [CartController::class, 'checkout']);

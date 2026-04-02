@@ -28,6 +28,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'wompi' => [
+        'public_key'    => env('WOMPI_PUBLIC_KEY'),
+        'integrity_key' => env('WOMPI_INTEGRITY_KEY'),
+        'events_key'    => env('WOMPI_EVENTS_KEY'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -2,13 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Inventory;
-use App\Models\Movement;
+
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
 
-class CartService
+class OrderService
 {
     /**
      * Create an order directly from a list of items sent by the frontend.
@@ -65,7 +64,7 @@ class CartService
                 : ($unitPriceOriginal * $quantity);
 
             $discountRuleId = $item['discount_rule_id'] ?? null;
-            $discountPercentage = $item['discount_percentage'] ?? null;
+            $discountPercentage = $item['discount_percentage'] ?? 0;
 
             $unitPriceDiscounted = isset($item['discounted_unit_price']) && $item['discounted_unit_price'] !== null
                 ? (float) $item['discounted_unit_price']
@@ -113,7 +112,7 @@ class CartService
             'notes' => $customerData['notes'] ?? null,
         ]);
 
-        // ── 3. Create OrderItems + deduct Inventory + register Movements ──────
+        // ── 3. Create OrderItems ───────────────────────────────────────────────
         foreach ($lineItems as $line) {
             /** @var ProductVariant $variant */
             $variant = $line['variant'];
@@ -138,31 +137,6 @@ class CartService
                 'discounted_unit_price' => $unitPriceDiscounted,
                 'discounted_total_price' => $totalPriceDiscounted,
             ]);
-
-            // Deduct stock from the first inventory record for this variant
-            $inventory = $variant->inventories->first();
-            if ($inventory) {
-                $before = $inventory->quantity_available;
-                $after = max(0, $before - $quantity);
-
-                $inventory->decrement('quantity_available', $quantity);
-
-                Movement::create([
-                    'type' => Movement::TYPE_SALE,
-                    'product_variant_id' => $variant->id,
-                    'inventory_id' => $inventory->id,
-                    'store_id' => $inventory->store_id,
-                    'quantity' => $quantity,
-                    'quantity_before' => $before,
-                    'quantity_after' => $after,
-                    'unit_cost' => $unitPriceDiscounted,
-                    'total_cost' => $totalPriceDiscounted,
-                    'reference_document' => $order->order_number,
-                    'user_id' => $userId,
-                    'notes' => "Venta — Orden {$order->order_number}",
-                    'metadata' => ['order_id' => $order->id],
-                ]);
-            }
         }
 
         return $order->load(['items.productVariant']);

@@ -17,6 +17,7 @@ class Order extends Model
         'cart_id',
         'store_id',
         'order_number',
+        'wompi_transaction_id',
         'status',
         'subtotal',
         'subtotal_original',
@@ -80,14 +81,11 @@ class Order extends Model
 
     public static function generateOrderNumber(): string
     {
-        $date = now()->format('Ymd');
-        $lastOrder = self::whereDate('created_at', today())
-            ->orderBy('id', 'desc')
-            ->first();
+        do {
+            $number = 'ORD-' . now()->format('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+        } while (self::where('order_number', $number)->exists());
 
-        $sequence = $lastOrder ? (int) substr($lastOrder->order_number, -4) + 1 : 1;
-        
-        return 'ORD-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+        return $number;
     }
 
     public function canBeCancelled(): bool

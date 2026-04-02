@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Services\CartService;
+use App\Services\OrderService;
+use App\Services\WompiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,8 @@ use Illuminate\Support\Facades\Auth;
 class CartController extends Controller
 {
     public function __construct(
-        protected CartService $cartService
+        protected OrderService $orderService,
+        protected WompiService $wompiService,
     ) {}
 
     public function checkout(Request $request): JsonResponse
@@ -43,37 +45,44 @@ class CartController extends Controller
                 'notes'          => $request->notes,
             ];
 
-            $order = $this->cartService->createOrderFromItems(
+            $orderWithItems = $this->orderService->createOrderFromItems(
                 $request->items,
                 $customerData,
                 $userId
             );
+
+            $amountInCents = (int) round($orderWithItems->total * 100);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Pedido creado correctamente.',
                 'data' => [
                     'order' => [
-                        'id'           => $order->id,
-                        'order_number' => $order->order_number,
-                        'status'       => $order->status,
-                            'subtotal_original' => $order->subtotal_original,
-                            'subtotal_discounted' => $order->subtotal_discounted,
-                        'total'        => $order->total,
-                        'currency'     => $order->currency,
-                        'created_at'   => $order->created_at->toIso8601String(),
+                        'id'                  => $orderWithItems->id,
+                        'order_number'        => $orderWithItems->order_number,
+                        'status'              => $orderWithItems->status,
+                        'subtotal_original'   => $orderWithItems->subtotal_original,
+                        'subtotal_discounted' => $orderWithItems->subtotal_discounted,
+                        'total'               => $orderWithItems->total,
+                        'currency'            => $orderWithItems->currency,
+                        'created_at'          => $orderWithItems->created_at->toIso8601String(),
                     ],
-                    'items' => $order->items->map(fn ($item) => [
-                        'product_name' => $item->product_name,
-                        'variant_sku'  => $item->variant_sku,
-                        'quantity'     => $item->quantity,
-                        'unit_price'   => $item->unit_price,
-                            'total_price'  => $item->total_price,
-                            'discount_rule_id' => $item->discount_rule_id,
-                            'discount_percentage' => $item->discount_percentage,
-                            'discounted_unit_price' => $item->discounted_unit_price,
-                            'discounted_total_price' => $item->discounted_total_price,
+                    'items' => $orderWithItems->items->map(fn ($item) => [
+                        'product_name'           => $item->product_name,
+                        'variant_sku'            => $item->variant_sku,
+                        'quantity'               => $item->quantity,
+                        'unit_price'             => $item->unit_price,
+                        'total_price'            => $item->total_price,
+                        'discount_rule_id'       => $item->discount_rule_id,
+                        'discount_percentage'    => $item->discount_percentage,
+                        'discounted_unit_price'  => $item->discounted_unit_price,
+                        'discounted_total_price' => $item->discounted_total_price,
                     ]),
+                    'payment' => $this->wompiService->widgetConfig(
+                        $orderWithItems->order_number,
+                        $amountInCents,
+                        $orderWithItems->currency,
+                    ),
                 ],
             ], 201);
         } catch (\Exception $e) {
