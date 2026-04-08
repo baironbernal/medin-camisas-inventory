@@ -14,12 +14,16 @@ class VariantResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $sizeAttr = $this->variantAttributes
+            ->first(fn ($va) => strtoupper($va->attribute->code) === 'SIZE');
+
         return [
-            'id' => $this->id,
-            'sku' => $this->sku,
-            'price' => $this->price,
-            'images' => $this->images,
+            'id'          => $this->id,
+            'sku'         => $this->sku,
+            'price'       => $this->price,
+            'images'      => $this->images,
             'inventories' => $this->inventories,
+            'size'        => $sizeAttr?->attributeValue->code ?? '',
         ];
     }
 }
