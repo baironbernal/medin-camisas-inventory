@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrderResource\Steps;
 use App\Models\User;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Get;
@@ -89,18 +90,55 @@ class WholesalerStep
 
     private static function registerSection(): Section
     {
+        $isNew = fn (Get $get): bool => blank($get('customer_id')) && filled($get('identity_number'));
+
         return Section::make('Registrar Nuevo Mayorista')
             ->description('No se encontró el mayorista. Complete los datos para registrarlo.')
             ->icon('heroicon-o-user-plus')
             ->schema([
-                TextInput::make('new_first_name')
-                    ->label('Nombres')
-                    ->required(fn (Get $get): bool => blank($get('customer_id')) && filled($get('identity_number')))
+                TextInput::make('new_full_name')
+                    ->label('Nombre completo')
+                    ->required($isNew)
+                    ->maxLength(150),
+                TextInput::make('new_whatsapp_number')
+                    ->label('Número de WhatsApp')
+                    ->tel()
+                    ->required($isNew)
+                    ->maxLength(20),
+                TextInput::make('new_city')
+                    ->label('Ciudad donde vendes')
+                    ->required($isNew)
                     ->maxLength(100),
-                TextInput::make('new_last_name')
-                    ->label('Apellidos')
-                    ->required(fn (Get $get): bool => blank($get('customer_id')) && filled($get('identity_number')))
-                    ->maxLength(100),
+                Select::make('new_selling_channel')
+                    ->label('¿Cómo vendes los productos?')
+                    ->options([
+                        'Tienda física' => 'Tienda física',
+                        'Instagram'     => 'Instagram',
+                        'WhatsApp'      => 'WhatsApp',
+                        'Personal'      => 'Personal',
+                    ])
+                    ->required($isNew),
+                TextInput::make('new_business_name')
+                    ->label('Nombre de tu negocio o marca (opcional)')
+                    ->maxLength(150),
+                Select::make('new_clothing_type')
+                    ->label('¿Qué tipo de ropa vendes principalmente?')
+                    ->options([
+                        'Hombre' => 'Hombre',
+                        'Dama'   => 'Dama',
+                        'Niño'   => 'Niño',
+                        'Mixto'  => 'Mixto',
+                    ])
+                    ->required($isNew),
+                Select::make('new_selling_location')
+                    ->label('¿Desde dónde vendes principalmente?')
+                    ->options([
+                        'Tienda física'  => 'Tienda física',
+                        'Redes sociales' => 'Redes sociales',
+                        'Catálogo'       => 'Catálogo',
+                        'Otro'           => 'Otro',
+                    ])
+                    ->required($isNew),
                 TextInput::make('customer_email')
                     ->label('Email')
                     ->email()
@@ -111,6 +149,6 @@ class WholesalerStep
                     ->dehydrated(),
             ])
             ->columns(2)
-            ->visible(fn (Get $get): bool => blank($get('customer_id')) && filled($get('identity_number')));
+            ->visible($isNew);
     }
 }

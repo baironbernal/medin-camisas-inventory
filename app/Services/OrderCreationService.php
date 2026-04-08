@@ -39,8 +39,11 @@ class OrderCreationService
         }
 
         // Register new wholesaler
-        $firstName = trim($data['new_first_name'] ?? '');
-        $lastName = trim($data['new_last_name'] ?? '');
+        $fullName = trim($data['new_full_name'] ?? '');
+        $nameParts = explode(' ', $fullName, 2);
+        $firstName = $nameParts[0] ?? $fullName;
+        $lastName  = $nameParts[1] ?? '';
+
         $rawEmail = $data['customer_email'] ?? null;
         $email = filled($rawEmail)
             ? $rawEmail
@@ -52,14 +55,20 @@ class OrderCreationService
         }
 
         return User::create([
-            'name' => trim("{$firstName} {$lastName}"),
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'identity_number' => $data['identity_number'],
-            'email' => $email,
-            'phone_number' => $data['customer_phone'] ?? null,
-            'password' => bcrypt(Str::random(20)),
-            'is_active' => false,  // no panel access for wholesalers
+            'name'             => $fullName,
+            'first_name'       => $firstName,
+            'last_name'        => $lastName,
+            'identity_number'  => $data['identity_number'],
+            'email'            => $email,
+            'phone_number'     => $data['customer_phone'] ?? null,
+            'whatsapp_number'  => $data['new_whatsapp_number'] ?? null,
+            'city'             => $data['new_city'] ?? null,
+            'selling_channel'  => $data['new_selling_channel'] ?? null,
+            'business_name'    => $data['new_business_name'] ?? null,
+            'clothing_type'    => $data['new_clothing_type'] ?? null,
+            'selling_location' => $data['new_selling_location'] ?? null,
+            'password'         => bcrypt(Str::random(20)),
+            'is_active'        => false,  // no panel access for wholesalers
         ]);
     }
 
@@ -73,7 +82,7 @@ class OrderCreationService
             'user_id' => $user?->id,
             'customer_name' => $isExisting
                 ? ($data['customer_name'] ?? $user?->name)
-                : trim(($data['new_first_name'] ?? '') . ' ' . ($data['new_last_name'] ?? '')),
+                : trim($data['new_full_name'] ?? ''),
             'customer_email' => $isExisting
                 ? ($data['customer_email'] ?? $user?->email)
                 : ($data['customer_email'] ?? null),
