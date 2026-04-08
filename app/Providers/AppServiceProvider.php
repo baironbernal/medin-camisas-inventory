@@ -5,8 +5,10 @@ namespace App\Providers;
 use App\Models\DiscountRule;
 use App\Models\Inventory;
 use App\Models\Movement;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
+use App\Observers\OrderObserver;
 use App\Policies\DiscountRulePolicy;
 use App\Policies\InventoryPolicy;
 use App\Policies\MovementPolicy;
@@ -30,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Order::observe(OrderObserver::class);
+
         Gate::policy(Product::class, ProductPolicy::class);
         Gate::policy(Inventory::class, InventoryPolicy::class);
         Gate::policy(Movement::class, MovementPolicy::class);

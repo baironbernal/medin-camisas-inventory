@@ -18,6 +18,7 @@ class Order extends Model
         'store_id',
         'order_number',
         'wompi_transaction_id',
+        'payment_proof_path',
         'status',
         'subtotal',
         'subtotal_original',

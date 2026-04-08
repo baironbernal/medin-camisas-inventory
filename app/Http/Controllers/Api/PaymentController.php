@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Services\InventoryService;
 use App\Services\WompiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +14,6 @@ class PaymentController extends Controller
 {
     public function __construct(
         protected WompiService $wompiService,
-        protected InventoryService $inventoryService,
     ) {}
 
     public function handleWebhook(Request $request): JsonResponse
@@ -59,12 +57,11 @@ class PaymentController extends Controller
         try {
             DB::transaction(function () use ($order, $status, $transactionId) {
                 if ($status === 'APPROVED') {
+                    // Updating to STATUS_CONFIRMED triggers OrderObserver → inventory deduction
                     $order->update([
                         'status'               => Order::STATUS_CONFIRMED,
                         'wompi_transaction_id' => $transactionId,
                     ]);
-
-                    $this->inventoryService->deductStockForOrder($order);
 
                 } elseif (in_array($status, ['DECLINED', 'VOIDED', 'ERROR'])) {
                     $order->update([

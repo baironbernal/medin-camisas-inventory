@@ -36,7 +36,7 @@ class LowSellingProducts extends BaseWidget
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_revenue')
                     ->label('Ingresos')
-                    ->money('USD')
+                    ->money('COP')
                     ->sortable(),
             ]);
     }

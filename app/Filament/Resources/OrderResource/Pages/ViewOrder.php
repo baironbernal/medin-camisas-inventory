@@ -3,12 +3,14 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
+use App\Models\Order;
 use Filament\Actions;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewOrder extends ViewRecord
@@ -18,7 +20,39 @@ class ViewOrder extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            // pending → confirmed (descuenta inventario vía OrderObserver)
+            Actions\Action::make('confirm_order')
+                ->label('Confirmar Pedido')
+                ->icon('heroicon-o-check-badge')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('¿Confirmar el pedido?')
+                ->modalDescription('El pedido quedará confirmado y el inventario se descontará automáticamente. Esta acción no se puede revertir.')
+                ->modalSubmitActionLabel('Sí, confirmar')
+                ->visible(fn (Order $record): bool => $record->status === Order::STATUS_PENDING)
+                ->action(function (Order $record): void {
+                    $record->update(['status' => Order::STATUS_CONFIRMED]);
+                    Notification::make()->title('Pedido confirmado — inventario descontado')->success()->send();
+                    $this->refreshFormData(['status']);
+                }),
+
+            // pending | confirmed → cancelled
+            Actions\Action::make('cancel_order')
+                ->label('Cancelar Pedido')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('¿Cancelar el pedido?')
+                ->modalDescription('El pedido se cancelará. El inventario no se verá afectado.')
+                ->visible(fn (Order $record): bool => $record->canBeCancelled())
+                ->action(function (Order $record): void {
+                    $record->update(['status' => Order::STATUS_CANCELLED]);
+                    Notification::make()->title('Pedido cancelado')->warning()->send();
+                    $this->refreshFormData(['status']);
+                }),
+
+            Actions\EditAction::make()->label('Editar'),
+
             Actions\Action::make('imprimir')
                 ->label('Imprimir Orden')
                 ->icon('heroicon-o-printer')
@@ -39,7 +73,7 @@ class ViewOrder extends ViewRecord
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
                                 'pending' => 'warning',
-                                'confirmed' => 'info',
+                                'confirmed' => 'success',
                                 'processing' => 'primary',
                                 'completed' => 'success',
                                 'cancelled' => 'danger',

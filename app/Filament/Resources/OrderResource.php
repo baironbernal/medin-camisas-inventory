@@ -6,6 +6,7 @@ use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Order;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -118,7 +119,7 @@ class OrderResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
-                        'confirmed' => 'info',
+                        'confirmed' => 'success',
                         'processing' => 'primary',
                         'completed' => 'success',
                         'cancelled' => 'danger',
@@ -168,6 +169,17 @@ class OrderResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('confirm_order')
+                    ->label('Confirmar')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalDescription('El inventario se descontará automáticamente al confirmar.')
+                    ->visible(fn (Order $record): bool => $record->status === Order::STATUS_PENDING)
+                    ->action(function (Order $record): void {
+                        $record->update(['status' => Order::STATUS_CONFIRMED]);
+                        Notification::make()->title('Pedido confirmado — inventario descontado')->success()->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -188,6 +200,7 @@ class OrderResource extends Resource
     {
         return [
             'index' => Pages\ListOrders::route('/'),
+            'create' => Pages\CreateOrder::route('/create'),
             'view' => Pages\ViewOrder::route('/{record}'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
