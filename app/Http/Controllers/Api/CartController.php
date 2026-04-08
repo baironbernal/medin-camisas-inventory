@@ -93,6 +93,74 @@ class CartController extends Controller
         }
     }
 
+    public function whatsappOrder(Request $request): JsonResponse
+    {
+        $request->validate([
+            'customer_name'  => 'nullable|string',
+            'customer_phone' => 'nullable|string',
+            'items'          => 'required|array|min:1',
+            'items.*.product_variant_id' => 'required|exists:product_variants,id',
+            'items.*.quantity'           => 'required|integer|min:1',
+            'items.*.unit_price'         => 'nullable|numeric|min:0',
+            'items.*.total_price'        => 'nullable|numeric|min:0',
+            'items.*.discount_rule_id'   => 'nullable|exists:discount_rules,id',
+            'items.*.discount_percentage' => 'nullable|numeric|min:0|max:100',
+            'items.*.discounted_unit_price' => 'nullable|numeric|min:0',
+            'items.*.discounted_total_price' => 'nullable|numeric|min:0',
+            'notes'          => 'nullable|string',
+        ]);
+
+        $userId = Auth::id();
+
+        try {
+            $customerData = [
+                'customer_email' => $request->customer_email ?? null,
+                'customer_name'  => $request->customer_name ?? 'Cliente WhatsApp',
+                'customer_phone' => $request->customer_phone,
+                'notes'          => $request->notes,
+            ];
+
+            $orderWithItems = $this->orderService->createOrderFromItems(
+                $request->items,
+                $customerData,
+                $userId
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pedido WhatsApp creado correctamente.',
+                'data' => [
+                    'order' => [
+                        'id'                  => $orderWithItems->id,
+                        'order_number'        => $orderWithItems->order_number,
+                        'status'              => $orderWithItems->status,
+                        'subtotal_original'   => $orderWithItems->subtotal_original,
+                        'subtotal_discounted' => $orderWithItems->subtotal_discounted,
+                        'total'               => $orderWithItems->total,
+                        'currency'            => $orderWithItems->currency,
+                        'created_at'          => $orderWithItems->created_at->toIso8601String(),
+                    ],
+                    'items' => $orderWithItems->items->map(fn ($item) => [
+                        'product_name'           => $item->product_name,
+                        'variant_sku'            => $item->variant_sku,
+                        'quantity'               => $item->quantity,
+                        'unit_price'             => $item->unit_price,
+                        'total_price'            => $item->total_price,
+                        'discount_rule_id'       => $item->discount_rule_id,
+                        'discount_percentage'    => $item->discount_percentage,
+                        'discounted_unit_price'  => $item->discounted_unit_price,
+                        'discounted_total_price' => $item->discounted_total_price,
+                    ]),
+                ],
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
     public function orders(Request $request): JsonResponse
     {
         $userId = Auth::id();

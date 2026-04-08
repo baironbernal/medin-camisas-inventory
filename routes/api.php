@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\Api\DiscountRuleController;
+use App\Http\Controllers\Api\OrderRulesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AuthController;
@@ -22,9 +23,13 @@ Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/discount-rules', [DiscountRuleController::class, 'index']);
+Route::get('/order-rules', [OrderRulesController::class, 'index']);
 
 // Wompi calls this — no auth, signature verified inside the controller
 Route::post('/webhooks/wompi', [PaymentController::class, 'handleWebhook']);
+
+// WhatsApp orders — no auth required, inventory is NOT deducted
+Route::post('/whatsapp-order', [CartController::class, 'whatsappOrder']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/checkout', [CartController::class, 'checkout']);
