@@ -153,7 +153,15 @@ class ProductController extends Controller implements HasMiddleware
             ])
             ->firstOrFail();
 
-        return new ProductResource($product);
+            $interestedProducts = Product::where('slug', '!=', $product->slug)
+            ->where('category_id', $product->category_id)
+            ->limit(4)
+            ->get();
+
+        return [
+            'product'=> new ProductResource($product),
+            'interested_products'=> $interestedProducts
+        ];
     }
 
     /**
