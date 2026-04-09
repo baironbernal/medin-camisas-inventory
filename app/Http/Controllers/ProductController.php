@@ -152,15 +152,20 @@ class ProductController extends Controller implements HasMiddleware
                 },
             ])
             ->firstOrFail();
+            //Get the topmost category
+            $rootCategory = $product->category->getRootAncestor();
+            //Get from the root category all the categories
+            $rootCategoryIds = $this->getAllCategoryIds($rootCategory->slug);
 
             $interestedProducts = Product::where('slug', '!=', $product->slug)
-            ->where('category_id', $product->category_id)
+            ->whereIn('category_id', $rootCategoryIds)
             ->limit(4)
             ->get();
 
         return [
             'product'=> new ProductResource($product),
-            'interested_products'=> $interestedProducts
+            'interested_products'=> $interestedProducts,
+
         ];
     }
 

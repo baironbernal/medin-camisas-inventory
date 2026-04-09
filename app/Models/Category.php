@@ -67,6 +67,21 @@ class Category extends Model
         return $query->whereNull('parent_id');
     }
 
+    /**
+     * Get the root (topmost) ancestor of this category.
+     * Traverses the parent chain until it finds a category with no parent.
+     */
+    public function getRootAncestor(): Category
+    {
+        $category = $this;
+
+        while ($category->parent) {
+            $category = $category->parent;
+        }
+
+        return $category;
+    }
+
     public function getFullNameAttribute(): string
     {
         if ($this->parent) {
