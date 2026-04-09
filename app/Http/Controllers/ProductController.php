@@ -57,6 +57,7 @@ class ProductController extends Controller implements HasMiddleware
         |--------------------------------------------------------------------------
         */
         $products = Product::query()
+            ->where('is_active', true)
             // Filtro por Categoría (Incluye descendientes)
             ->when($categoryIds->isNotEmpty(), function ($q) use ($categoryIds) {
                 $q->whereIn('category_id', $categoryIds);
@@ -94,10 +95,16 @@ class ProductController extends Controller implements HasMiddleware
             })
 
             /* --- Ordenamiento --- */
-            ->when($request->filled('order_by'), 
-                fn ($q) => $q->orderBy($request->order_by, $request->get('order_dir', 'desc')),
-                fn ($q) => $q->latest()
-            )
+            ->when($request->filled('order_by'), function ($q) use ($request) {
+                $allowed = ['name', 'base_price', 'created_at', 'brand'];
+                $aliases = ['price' => 'base_price'];
+                $column = $aliases[$request->order_by] ?? $request->order_by;
+                if (in_array($column, $allowed)) {
+                    $q->orderBy($column, $request->get('order_dir', 'desc'));
+                } else {
+                    $q->latest();
+                }
+            }, fn ($q) => $q->latest())
 
             /* --- Conteo de Colores --- */
             ->withCount(['variants as colors_count' => function ($query) {
@@ -136,6 +143,7 @@ class ProductController extends Controller implements HasMiddleware
     {
         $product = Product::query()
             ->where('slug', $slug)
+            ->where('is_active', true)
             ->with([
                 'category',
                 'variants' => function ($query) {

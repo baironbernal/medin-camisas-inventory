@@ -6,18 +6,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class ProductVariant extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia, SoftDeletes;
 
     protected static function boot()
     {
         parent::boot();
 
         static::deleting(function (self $variant) {
+            // Only wipe related data on force delete — soft delete leaves everything intact
+            if (! $variant->isForceDeleting()) {
+                return;
+            }
+
+            if ($variant->orderItems()->exists()) {
+                throw new \Exception("No se puede eliminar permanentemente la variante {$variant->sku} porque tiene órdenes de compra.");
+            }
+
             $variant->movements()->delete();
             $variant->inventories()->delete();
             $variant->variantAttributes()->delete();
@@ -63,6 +73,11 @@ class ProductVariant extends Model implements HasMedia
     public function variantAttributes(): HasMany
     {
         return $this->hasMany(VariantAttribute::class);
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
     }
 
     public function scopeActive($query)

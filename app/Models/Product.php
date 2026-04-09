@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Sluggable\HasSlug;
@@ -13,7 +14,7 @@ use Spatie\Sluggable\SlugOptions;
 
 class Product extends Model implements HasMedia
 {
-    use HasFactory, HasSlug, InteractsWithMedia;
+    use HasFactory, HasSlug, InteractsWithMedia, SoftDeletes;
 
     protected $fillable = [
         'reference_code',
@@ -52,7 +53,18 @@ class Product extends Model implements HasMedia
         });
 
         static::deleting(function (self $product) {
-            $product->variants()->get()->each->delete();
+            // Soft-delete all variants (including already soft-deleted ones)
+            // Only cascade if this is a soft delete, not a force delete
+            if (! $product->isForceDeleting()) {
+                $product->variants()->get()->each->delete();
+            } else {
+                // Force delete: only delete variants with no order items
+                $product->variants()->withTrashed()->get()->each(function ($variant) {
+                    if (! $variant->orderItems()->exists()) {
+                        $variant->forceDelete();
+                    }
+                });
+            }
             $product->priceRules()->delete();
             $product->clearMediaCollection('product-images');
         });

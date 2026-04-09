@@ -138,6 +138,7 @@ class VariantsRelationManager extends RelationManager
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Estado'),
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->headerActions([
                 $this->generateVariantsAction(),
@@ -146,11 +147,24 @@ class VariantsRelationManager extends RelationManager
             ->actions([
                 Tables\Actions\EditAction::make()->slideOver(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\RestoreAction::make(),
+                Tables\Actions\ForceDeleteAction::make()
+                    ->before(function ($record, $action) {
+                        if ($record->orderItems()->exists()) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('No se puede eliminar')
+                                ->body("La variante {$record->sku} tiene órdenes de compra y no puede eliminarse permanentemente.")
+                                ->danger()
+                                ->send();
+                            $action->cancel();
+                        }
+                    }),
                 Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
