@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\BusinessException;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\CartService;
@@ -10,6 +11,7 @@ use App\Services\WompiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class CartController extends Controller
 {
@@ -98,8 +100,17 @@ class CartController extends Controller
                     ),
                 ],
             ], 201);
-        } catch (\Exception $e) {
+        } catch (BusinessException $e) {
+            // Expected business error — message is safe to show the user
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Exception $e) {
+            // Unexpected technical error — log full details, hide internals from user
+            Log::error('Checkout failed unexpectedly', [
+                'user_id' => Auth::id(),
+                'error'   => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+            return response()->json(['success' => false, 'message' => 'Error al procesar el pedido. Intenta de nuevo.'], 500);
         }
     }
 
@@ -156,18 +167,26 @@ class CartController extends Controller
                     ]),
                 ],
             ], 201);
-        } catch (\Exception $e) {
+        } catch (BusinessException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Exception $e) {
+            Log::error('WhatsApp order failed unexpectedly', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['success' => false, 'message' => 'Error al crear el pedido. Intenta de nuevo.'], 500);
         }
     }
 
     // ── GET /api/orders ───────────────────────────────────────────────────────
     public function orders(): JsonResponse
     {
+        $perPage = min(50, max(1, (int) request()->query('per_page', 15)));
+
         $orders = Order::forUser(Auth::id())
             ->with(['items'])
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate($perPage);
 
         return response()->json(['success' => true, 'data' => $orders]);
     }

@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Exceptions\BusinessException;
 use App\Models\Order;
 use App\Models\OrderItem;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderService
@@ -25,25 +27,29 @@ class OrderService
     public function createOrderFromItems(array $items, array $customerData, ?int $userId = null): Order
     {
         if (empty($items)) {
-            throw new \Exception('El carrito está vacío.');
+            throw new BusinessException('El carrito está vacío.');
         }
 
         // ── 1. Calculate everything server-side ───────────────────────────────
         $calculated = $this->cartService->calculate($items);
 
         if (empty($calculated['items'])) {
-            throw new \Exception('Ningún producto del carrito está disponible.');
+            throw new BusinessException('Ningún producto del carrito está disponible.');
         }
 
-        // ── 2. Validate stock for each item ───────────────────────────────────
-        // We load variants to check stock — CartService already loaded them but
-        // doesn't expose the Eloquent models, so we do a lightweight check here.
+        return DB::transaction(function () use ($items, $calculated, $customerData, $userId) {
+
+        // ── 2. Validate stock — with exclusive row lock ───────────────────────
+        // lockForUpdate() acquires an exclusive row-level lock inside this
+        // transaction. Any concurrent checkout for the same variants will block
+        // here until this transaction commits, eliminating the TOCTOU race.
         $variantIds  = array_column($items, 'product_variant_id');
         $quantityMap = array_column($items, 'quantity', 'product_variant_id');
 
         $variants = \App\Models\ProductVariant::with('inventories')
             ->whereIn('id', $variantIds)
             ->where('is_active', true)
+            ->lockForUpdate()
             ->get()
             ->keyBy('id');
 
@@ -52,11 +58,11 @@ class OrderService
             $quantity = (int) ($quantityMap[$variantId] ?? 0);
 
             if (! $variant) {
-                throw new \Exception("Producto con ID {$variantId} no encontrado.");
+                throw new BusinessException("Producto con ID {$variantId} no encontrado.");
             }
 
             if ($variant->total_stock < $quantity) {
-                throw new \Exception(
+                throw new BusinessException(
                     "Stock insuficiente para '{$variant->sku}'. ".
                     "Disponible: {$variant->total_stock}, solicitado: {$quantity}."
                 );
@@ -120,5 +126,7 @@ class OrderService
         ]);
 
         return $order->load(['items.productVariant']);
+
+        }); // end DB::transaction
     }
 }

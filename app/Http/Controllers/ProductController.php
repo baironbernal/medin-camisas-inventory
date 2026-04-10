@@ -97,11 +97,14 @@ class ProductController extends Controller implements HasMiddleware
 
             /* --- Ordenamiento --- */
             ->when($request->filled('order_by'), function ($q) use ($request) {
-                $allowed = ['name', 'base_price', 'created_at', 'brand'];
-                $aliases = ['price' => 'base_price'];
-                $column = $aliases[$request->order_by] ?? $request->order_by;
+                $allowed   = ['name', 'base_price', 'created_at', 'brand'];
+                $aliases   = ['price' => 'base_price'];
+                $column    = $aliases[$request->order_by] ?? $request->order_by;
+                $direction = in_array($request->get('order_dir'), ['asc', 'desc'])
+                    ? $request->get('order_dir')
+                    : 'desc';
                 if (in_array($column, $allowed)) {
-                    $q->orderBy($column, $request->get('order_dir', 'desc'));
+                    $q->orderBy($column, $direction);
                 } else {
                     $q->latest();
                 }

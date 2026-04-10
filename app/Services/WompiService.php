@@ -48,6 +48,6 @@ class WompiService
         $concatenated .= $timestamp;
         $concatenated .= config('services.wompi.events_key');
 
-        return hash('sha256', $concatenated) === $checksum;
+        return hash_equals($checksum, hash('sha256', $concatenated));
     }
 }

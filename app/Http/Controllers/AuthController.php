@@ -73,7 +73,12 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        // Always run Hash::check() — even for non-existent users — so the
+        // response time is identical whether the email exists or not.
+        // Without this, timing differences reveal which emails are registered.
+        $hashToCheck = $user?->password ?? Hash::make('dummy-prevent-timing-attack');
+
+        if (!$user || !Hash::check($request->password, $hashToCheck)) {
             return response()->json([
                 'message' => 'Credenciales inválidas.',
             ], 401);

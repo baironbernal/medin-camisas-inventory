@@ -45,8 +45,14 @@ Route::middleware('throttle:30,1')->group(function () {
 // ── Capa 4: Rutas de datos personales — requieren autenticación ───────────
 // auth:sanctum garantiza que el usuario está logueado (401 si no)
 // El ownership de cada recurso se verifica dentro del controlador (403 si no es tuyo)
-Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+
+// Checkout: límite estricto — es una operación financiera
+Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
     Route::post('/checkout', [CartController::class, 'checkout']);
+});
+
+// Consulta de órdenes: límite moderado — solo lectura
+Route::middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
     Route::get('/orders', [CartController::class, 'orders']);
     Route::get('/orders/{order}', [CartController::class, 'showOrder']);
 });
