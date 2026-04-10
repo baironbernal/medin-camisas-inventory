@@ -19,7 +19,7 @@ class AttributeSeeder extends Seeder
             'sort_order' => 1,
         ]);
 
-        $sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Única', '10', '12', '14', '16', '18', '20'];
+        $sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', 'Única', '10', '12', '14', '16', '18', '20', '22', '24', '26', '28', '30', '32', '34', '36', '38', '40', '42', '44', '46'];
         foreach ($sizes as $index => $sizeValue) {
             AttributeValue::create([
                 'attribute_id' => $size->id,

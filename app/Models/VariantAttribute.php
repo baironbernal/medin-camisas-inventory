@@ -28,7 +28,7 @@ class VariantAttribute extends Model
 
     public function attributeValue(): BelongsTo
     {
-        return $this->belongsTo(AttributeValue::class);
+        return $this->belongsTo(AttributeValue::class)->orderBy('sort_order', 'asc');
     }
 }
 

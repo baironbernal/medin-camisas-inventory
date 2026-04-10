@@ -15,9 +15,9 @@ return new class extends Migration
     {
         $sizeAttribute = Attribute::where('code', 'SIZE')->first();
 
-    if (!$sizeAttribute) {
-        return;
-    }
+        if (!$sizeAttribute) {
+            return;
+        }
 
     $sizes = [
         ['code' => 'UNICA', 'value' => 'Única'], 
