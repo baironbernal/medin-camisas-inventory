@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AttributeValue;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\Category;
@@ -153,6 +154,13 @@ class ProductController extends Controller implements HasMiddleware
                     ->with([
                         'inventories' => function ($q) {
                             $q->where('quantity_available', '>', 0);
+                        },
+                        'variantAttributes' => function ($q) {
+                            $q->orderBy(
+                                AttributeValue::select('sort_order')
+                                    ->whereColumn('attribute_values.id', 'variant_attributes.attribute_value_id')
+                                    ->limit(1)
+                            );
                         },
                         'variantAttributes.attribute',
                         'variantAttributes.attributeValue',
