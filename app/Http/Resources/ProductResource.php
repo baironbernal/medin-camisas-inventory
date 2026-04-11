@@ -57,22 +57,37 @@ class ProductResource extends JsonResource
     {
         $index = [];
 
+        // Fixed attribute order guarantees a predictable key format regardless
+        // of the sort_order assigned to each attribute value in the database.
+        // Frontend parses the key assuming this exact order: Talla|Color|Material
+        $attributeOrder = ['Talla', 'Color', 'Material'];
+
         foreach ($variants as $variant) {
 
-            $attributes = [];
-
+            // Collect all attributes by name first
+            $attrMap = [];
             foreach ($variant->variantAttributes as $attr) {
-                $attributes[$attr->attribute->name] = $attr->attributeValue->value;
+                $attrMap[$attr->attribute->name] = $attr->attributeValue->value;
             }
 
-            $key = implode('-', $attributes); 
+            // Build segments in fixed order, skip attributes the variant doesn't have
+            $segments = [];
+            foreach ($attributeOrder as $name) {
+                if (array_key_exists($name, $attrMap)) {
+                    $segments[] = $attrMap[$name];
+                }
+            }
+
+            // Use '|' as separator — attribute values never contain a pipe,
+            // so parsing is always unambiguous (a '-' in e.g. "Azul-Oscuro" breaks split('-'))
+            $key = implode('|', $segments);
 
             $index[$key] = [
                 'variant_id' => $variant->id,
-                'stock' => $variant->inventories->sum('quantity_available')
+                'stock'      => $variant->inventories->sum('quantity_available'),
             ];
         }
 
         return $index;
-    }   
+    }
 }
