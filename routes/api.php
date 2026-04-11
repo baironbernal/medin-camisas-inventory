@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Api\DiscountRuleController;
 use App\Http\Controllers\Api\OrderRulesController;
 use App\Http\Controllers\Api\PaymentController;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 // ── Capa 1: Rutas públicas ─────────────────────────────────────────────────
 // Catálogo visible para cualquiera — 60 req/min por IP
 Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/locations/departments', [LocationController::class, 'departments']);
+    Route::get('/locations/municipalities/{departmentId}', [LocationController::class, 'municipalities']);
     Route::resource('/products', ProductController::class)->only(['index', 'show']);
     Route::resource('/categories', CategoryController::class)->only(['index', 'show']);
     Route::resource('/attributes', AttributeController::class)->only(['index', 'show']);

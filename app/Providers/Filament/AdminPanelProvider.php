@@ -2,9 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\AdvancedStatsOverviewWidget;
 use App\Filament\Widgets\LowSellingProducts;
 use App\Filament\Widgets\LowStockWidget;
-use App\Filament\Widgets\StatsOverview;
 use App\Filament\Widgets\TopSellingProducts;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -31,10 +31,24 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile()
             ->colors([
-                'primary' => Color::Amber,
+                // Base UI — dark navy purple (sidebar, nav, headers)
+                'primary' => Color::hex('#292944'),
+                // Gray scale tinted with the brand purple (backgrounds, borders, text)
+                'gray'    => Color::hex('#3E3C64'),
+                // Info — soft purple accent
+                'info'    => Color::hex('#3E3C64'),
+                // Success — sage green that harmonises with the beige palette
+                'success' => Color::hex('#4A7C59'),
+                // Warning — warm amber
+                'warning' => Color::hex('#C9813A'),
+                // Danger — muted rose/brick
+                'danger'  => Color::hex('#9B3B3B'),
             ])
-            ->brandName('Sistema de Inventario')
+            ->brandLogo(fn() => view('filament.logos.logo-light'))
+            ->darkModeBrandLogo(fn() => view('filament.logos.logo-dark'))
+            ->brandLogoHeight('42px')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -42,7 +56,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                StatsOverview::class,
+                AdvancedStatsOverviewWidget::class,
                 TopSellingProducts::class,
                 LowSellingProducts::class,
                 LowStockWidget::class,
@@ -72,6 +86,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('full')
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->spa();
     }
 }

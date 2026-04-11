@@ -31,7 +31,8 @@ class AuthController extends Controller
             'last_name'        => 'nullable|string|max:255',
             'password'         => 'required|string|min:8',
             'whatsapp_number'  => 'nullable|string|max:255',
-            'city'             => 'nullable|string|max:255',
+            'department_id'    => 'nullable|integer|exists:departamentos,id',
+            'municipality_id'  => 'nullable|integer|exists:municipios,id',
             'selling_channel'  => 'nullable|string|max:255',
             'clothing_type'    => 'nullable|string|max:255',
             'selling_location' => 'nullable|string|max:255',
@@ -48,12 +49,15 @@ class AuthController extends Controller
             'email'            => $request->email,
             'password'         => Hash::make($request->password),
             'whatsapp_number'  => $request->whatsapp_number,
-            'city'             => $request->city,
+            'department_id'    => $request->department_id,
+            'municipality_id'  => $request->municipality_id,
             'selling_channel'  => $request->selling_channel,
             'clothing_type'    => $request->clothing_type,
             'selling_location' => $request->selling_location,
             'business_name'    => $request->business_name,
         ]);
+
+        $user->assignRole('wholesaler');
 
         $token = $user->createToken('auth_token')->plainTextToken;
 

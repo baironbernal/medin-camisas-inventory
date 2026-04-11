@@ -152,17 +152,40 @@ class ProductsStep
 
     private static function searchVariants(string $search): array
     {
+        // Split into individual terms so "camisa xs algodón" matches
+        // a variant whose product is "Camisa Básica", size "XS", material "Algodón".
+        // Every term must match somewhere (AND logic, case-insensitive via LIKE).
+        $terms = array_values(array_filter(explode(' ', trim($search))));
+
+        if (empty($terms)) {
+            return [];
+        }
+
         return ProductVariant::with([
             'product',
+            'media',
             'variantAttributes.attribute',
             'variantAttributes.attributeValue',
         ])
-            ->whereHas(
-                'product',
-                fn ($q) => $q->where('name', 'like', "%{$search}%")->where('is_active', true)
-            )
+            ->whereHas('product', fn ($q) => $q->where('is_active', true))
             ->where('is_active', true)
-            ->limit(20)
+            ->where(function ($query) use ($terms): void {
+                foreach ($terms as $term) {
+                    $query->where(function ($q) use ($term): void {
+                        $like = "%{$term}%";
+                        // Match product name
+                        $q->whereHas('product', fn ($pq) => $pq->where('name', 'like', $like))
+                          // or variant SKU
+                          ->orWhere('sku', 'like', $like)
+                          // or any attribute value (size, color, material…)
+                          ->orWhereHas(
+                              'variantAttributes.attributeValue',
+                              fn ($vq) => $vq->where('value', 'like', $like)
+                          );
+                    });
+                }
+            })
+            ->limit(30)
             ->get()
             ->mapWithKeys(fn (ProductVariant $v): array => [$v->id => self::variantOptionHtml($v)])
             ->all();

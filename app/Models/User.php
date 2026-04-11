@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use BaironBernal\ColombiaLocations\Models\Departamento;
+use BaironBernal\ColombiaLocations\Models\Municipio;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -25,7 +27,8 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'phone_number',
         'whatsapp_number',
-        'city',
+        'department_id',
+        'municipality_id',
         'selling_channel',
         'business_name',
         'clothing_type',
@@ -55,6 +58,16 @@ class User extends Authenticatable implements FilamentUser
     public function assignedStore(): BelongsTo
     {
         return $this->belongsTo(Store::class, 'assigned_store_id');
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Departamento::class, 'department_id');
+    }
+
+    public function municipality(): BelongsTo
+    {
+        return $this->belongsTo(Municipio::class, 'municipality_id');
     }
 
     public function movements(): HasMany

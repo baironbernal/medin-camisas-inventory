@@ -8,6 +8,7 @@ use App\Models\Movement;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
+use App\Observers\InventoryObserver;
 use App\Observers\OrderObserver;
 use App\Policies\DiscountRulePolicy;
 use App\Policies\InventoryPolicy;
@@ -33,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Order::observe(OrderObserver::class);
+        Inventory::observe(InventoryObserver::class);
 
         Gate::policy(Product::class, ProductPolicy::class);
         Gate::policy(Inventory::class, InventoryPolicy::class);
