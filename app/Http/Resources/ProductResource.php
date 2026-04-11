@@ -29,29 +29,48 @@ class ProductResource extends JsonResource
 
     private function buildAvailableAttributes($variants)
     {
-        $attributes = [];
+        // Key: attribute name → [ raw_value => ['sort_order' => int, 'value' => mixed] ]
+        // Using raw_value as the deduplication key avoids duplicates across variants
+        // while preserving sort_order so we can sort afterwards.
+        $entries = [];
 
         foreach ($variants as $variant) {
             foreach ($variant->variantAttributes as $variantAttribute) {
                 $attributeName = $variantAttribute->attribute->name;
-                $value = $variantAttribute->attributeValue->value;
+                $rawValue      = $variantAttribute->attributeValue->value;
+                $sortOrder     = $variantAttribute->attributeValue->sort_order ?? 0;
 
-                if($variantAttribute->attribute->code === 'COLOR') {
-                    $value = [
-                        'name' => $variantAttribute->attributeValue->value,
-                        'hex_color' => $variantAttribute->attributeValue->hex_color
-                    ];
+                // Only store the first occurrence — deduplication by raw value
+                if (isset($entries[$attributeName][$rawValue])) {
+                    continue;
                 }
-                $attributes[$attributeName][] = $value ;
+
+                if ($variantAttribute->attribute->code === 'COLOR') {
+                    $value = [
+                        'name'      => $rawValue,
+                        'hex_color' => $variantAttribute->attributeValue->hex_color,
+                    ];
+                } else {
+                    $value = $rawValue;
+                }
+
+                $entries[$attributeName][$rawValue] = [
+                    'sort_order' => $sortOrder,
+                    'value'      => $value,
+                ];
             }
         }
 
-        foreach ($attributes as $key => $values) {
-            $attributes[$key] = array_values(array_unique($values, SORT_REGULAR));
+        $attributes = [];
+
+        foreach ($entries as $name => $valueMap) {
+            // Sort by sort_order ascending so sizes come out 24, 26, 28, 30 ...
+            uasort($valueMap, fn ($a, $b) => $a['sort_order'] <=> $b['sort_order']);
+            $attributes[$name] = array_values(array_map(fn ($e) => $e['value'], $valueMap));
         }
 
         return $attributes;
-    }      
+    }
 
     private function buildCombinationIndex($variants)
     {
