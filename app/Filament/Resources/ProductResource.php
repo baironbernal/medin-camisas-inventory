@@ -114,6 +114,15 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('images')
+                    ->label('')
+                    ->disk('public')
+                    ->getStateUsing(fn ($record) => collect($record->images)->first())
+                    ->width(48)
+                    ->height(48)
+                    ->rounded()
+                    ->defaultImageUrl(asset('images/placeholder.png')),
+
                 Tables\Columns\TextColumn::make('reference_code')
                     ->label('Código')
                     ->searchable()

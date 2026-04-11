@@ -163,7 +163,6 @@ class ProductsStep
 
         return ProductVariant::with([
             'product',
-            'media',
             'variantAttributes.attribute',
             'variantAttributes.attributeValue',
         ])
@@ -193,7 +192,8 @@ class ProductsStep
 
     private static function variantOptionHtml(ProductVariant $variant): string
     {
-        $imageUrl = $variant->getFirstMediaUrl('variant-images');
+        $firstImage = collect($variant->images)->first();
+        $imageUrl   = $firstImage ? asset('storage/' . $firstImage) : null;
 
         $imgStyle = 'width:40px;height:40px;object-fit:cover;border-radius:4px;flex-shrink:0;';
         $imgHtml = $imageUrl

@@ -101,6 +101,14 @@ class VariantsRelationManager extends RelationManager
             ->recordUrl(null)
             ->recordAction(null)
             ->columns([
+                Tables\Columns\ImageColumn::make('images')
+                    ->label('')
+                    ->disk('public')
+                    ->getStateUsing(fn ($record) => collect($record->images)->first())
+                    ->width(48)
+                    ->height(48)
+                    ->rounded(),
+
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable()
