@@ -68,6 +68,11 @@ class ProductResource extends Resource
                             ->required()
                             ->numeric()
                             ->prefix('$'),
+                        Forms\Components\TextInput::make('wholesaler_price')
+                            ->label('Precio Mayorista')
+                            ->numeric()
+                            ->nullable()
+                            ->prefix('$'),
                         Forms\Components\TextInput::make('brand')
                             ->label('Marca')
                             ->maxLength(255),
@@ -141,6 +146,11 @@ class ProductResource extends Resource
                     ->label('Precio Base')
                     ->money('COP')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('wholesaler_price')
+                    ->label('Precio Mayorista')
+                    ->money('COP')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Activo')
                     ->boolean(),

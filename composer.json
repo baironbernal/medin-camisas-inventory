@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.4.15",
         "baironbernal/colombia-locations": "^1.0",
+        "barryvdh/laravel-dompdf": "^3.1",
         "codewithdennis/filament-select-tree": "^3.1",
         "eightynine/filament-advanced-widgets": "^3.0",
         "filament/filament": "^3.2",
