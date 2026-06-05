@@ -18,6 +18,7 @@ class OrderItem extends Model
         'quantity',
         'unit_price',
         'discount_rule_id',
+        'discount_id',
         'discount_percentage',
         'discounted_unit_price',
         'total_price',
@@ -41,5 +42,10 @@ class OrderItem extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    public function discount(): BelongsTo
+    {
+        return $this->belongsTo(Discount::class);
     }
 }

@@ -12,13 +12,13 @@ use App\Models\DiscountRule;
 
 class DiscountRuleResource extends Resource
 {
-    protected static ?string $model = \App\Models\DiscountRule::class;
+    protected static ?string $model = DiscountRule::class;
 
-    protected static ?string $navigationGroup = 'Inventario';
+    protected static ?string $navigationGroup = 'Descuentos';
 
     protected static ?int $navigationSort = 3;
 
-    protected static ?string $navigationLabel = 'Descuentos';
+    protected static ?string $navigationLabel = 'Reglas del Carrito';
 
     public static function form(Form $form): Form
     {
