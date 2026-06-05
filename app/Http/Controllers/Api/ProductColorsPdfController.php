@@ -20,8 +20,17 @@ class ProductColorsPdfController extends Controller
             ->pluck('images')
             ->flatten()
             ->filter()
-            ->map(fn ($path) => url('storage/' . $path))
             ->unique()
+            ->map(function ($path) {
+                $fullPath = public_path('storage/' . $path);
+                if (! file_exists($fullPath)) {
+                    return null;
+                }
+                $mime = mime_content_type($fullPath);
+                $data = base64_encode(file_get_contents($fullPath));
+                return "data:{$mime};base64,{$data}";
+            })
+            ->filter()
             ->values()
             ->toArray();
 
