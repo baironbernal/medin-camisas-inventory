@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Api\DiscountRuleController;
 use App\Http\Controllers\Api\HomeAdController;
+use App\Http\Controllers\Api\MetadatoController;
 use App\Http\Controllers\Api\OrderRulesController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductColorsPdfController;
@@ -25,6 +26,7 @@ Route::middleware('throttle:60,1')->group(function () {
     Route::get('/order-rules', [OrderRulesController::class, 'index']);
     Route::get('/home-ads', [HomeAdController::class, 'index']);
     Route::get('/products/{slug}/colors-pdf', [ProductColorsPdfController::class, 'download']);
+    Route::get('/metadatos/banner-video', [MetadatoController::class, 'bannerVideo']);
 });
 
 // ── Capa 2: Autenticación — límite estricto para evitar fuerza bruta ──────

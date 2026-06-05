@@ -17,6 +17,11 @@ class ViewOrder extends ViewRecord
 {
     protected static string $resource = OrderResource::class;
 
+    protected function resolveRecord(int | string $key): Order
+    {
+        return Order::with(['items.productVariant'])->findOrFail($key);
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -107,11 +112,12 @@ class ViewOrder extends ViewRecord
                             ->html()
                             ->columnSpanFull()
                             ->state(function ($record) {
-                                $items = $record->items->load(['productVariant.media']);
+                                $items = $record->items;
 
                                 $rows = '';
                                 foreach ($items as $item) {
-                                    $imageUrl = $item->productVariant?->getFirstMediaUrl('variant-images') ?? '';
+                                    $firstImage = $item->productVariant?->images[0] ?? null;
+                                    $imageUrl = $firstImage ? url('storage/' . $firstImage) : null;
                                     $imgTag = $imageUrl
                                         ? "<img src=\"{$imageUrl}\" style=\"width:48px;height:48px;object-fit:cover;border-radius:4px;\">"
                                         : "<div style=\"width:48px;height:48px;background:#f3f4f6;border-radius:4px;\"></div>";
