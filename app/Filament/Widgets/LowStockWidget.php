@@ -9,6 +9,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class LowStockWidget extends BaseWidget
 {
+    protected static bool $isDiscovered = false;
+
     protected int|string|array $columnSpan = 'full';
 
     protected function getTableHeading(): string

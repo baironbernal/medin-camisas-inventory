@@ -4,8 +4,10 @@ namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
 use App\Models\Order;
+use App\Models\User;
 use Filament\Actions;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -60,6 +62,42 @@ class ViewOrder extends ViewRecord
                     $this->redirect($this->getResource()::getUrl('view', ['record' => $record->id]));
                 }),
 
+            Actions\Action::make('assign_wholesaler')
+                ->label(fn (): string => $this->record->user_id ? 'Cambiar Mayorista' : 'Asignar Mayorista')
+                ->icon('heroicon-o-user-plus')
+                ->color('info')
+                ->modalHeading('Asociar Mayorista al Pedido')
+                ->modalWidth('md')
+                ->form([
+                    Select::make('user_id')
+                        ->label('Mayorista')
+                        ->options(fn () => User::role('wholesaler')
+                            ->where('is_active', true)
+                            ->get()
+                            ->mapWithKeys(fn (User $u) => [
+                                $u->id => "{$u->full_name} — {$u->phone_number}",
+                            ])
+                            ->toArray()
+                        )
+                        ->placeholder('Sin mayorista')
+                        ->searchable()
+                        ->nullable(),
+                ])
+                ->mountUsing(fn (\Filament\Forms\Form $form) => $form->fill([
+                    'user_id' => $this->record->user_id,
+                ]))
+                ->action(function (array $data): void {
+                    $this->record->update(['user_id' => $data['user_id']]);
+                    $label = $data['user_id']
+                        ? User::find($data['user_id'])?->full_name
+                        : null;
+                    Notification::make()
+                        ->title($label ? "Mayorista asignado: {$label}" : 'Mayorista desvinculado')
+                        ->success()
+                        ->send();
+                    $this->refreshFormData(['user_id']);
+                }),
+
             Actions\EditAction::make()->label('Editar'),
 
             Actions\Action::make('imprimir')
@@ -99,6 +137,11 @@ class ViewOrder extends ViewRecord
                         TextEntry::make('customer_name')->label('Cliente'),
                         TextEntry::make('customer_email')->label('Email'),
                         TextEntry::make('customer_phone')->label('Teléfono'),
+                        TextEntry::make('user.full_name')
+                            ->label('Mayorista')
+                            ->placeholder('Sin asignar')
+                            ->badge()
+                            ->color('info'),
                         TextEntry::make('created_at')->label('Fecha')->dateTime('d/m/Y H:i'),
                     ])
                     ->columns(2),

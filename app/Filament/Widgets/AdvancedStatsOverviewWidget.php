@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
+use App\Services\SalesRevenueService;
 use EightyNine\FilamentAdvancedWidget\AdvancedStatsOverviewWidget as BaseWidget;
 use EightyNine\FilamentAdvancedWidget\AdvancedStatsOverviewWidget\Stat;
 use Illuminate\Support\Carbon;
@@ -24,7 +25,7 @@ class AdvancedStatsOverviewWidget extends BaseWidget
             ->where('orders.created_at', '>=', $start);
 
         $salesCount   = (clone $currentItems)->sum('quantity');
-        $salesRevenue = (clone $currentItems)->sum('order_items.total_price');
+        $salesRevenue = SalesRevenueService::forPeriod($start);
         $orderCount   = Order::where('created_at', '>=', $start)->count();
 
         // ── Previous period (for progress comparison) ────────────────────
@@ -32,7 +33,7 @@ class AdvancedStatsOverviewWidget extends BaseWidget
             ->whereBetween('orders.created_at', [$prevStart, $prevEnd]);
 
         $prevSalesCount   = (clone $prevItems)->sum('quantity');
-        $prevSalesRevenue = (clone $prevItems)->sum('order_items.total_price');
+        $prevSalesRevenue = SalesRevenueService::forPeriod($prevStart, $prevEnd);
         $prevOrderCount   = Order::whereBetween('created_at', [$prevStart, $prevEnd])->count();
 
         $salesProgress   = $this->progressVsPrev($salesCount, $prevSalesCount);
@@ -124,11 +125,7 @@ class AdvancedStatsOverviewWidget extends BaseWidget
 
     private function last7DaysRevenue(): array
     {
-        return $this->last7DaysQuery(fn ($date) =>
-            OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
-                ->whereDate('orders.created_at', $date)
-                ->sum('order_items.total_price')
-        );
+        return $this->last7DaysQuery(fn ($date) => SalesRevenueService::forDate($date));
     }
 
     private function last7DaysOrders(): array

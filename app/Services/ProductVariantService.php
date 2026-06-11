@@ -52,7 +52,7 @@ class ProductVariantService
                 $colors->push(AttributeValue::create([
                     'attribute_id' => $colorAttr->id,
                     'value'        => $data['other_color_value'],
-                    'code'         => strtoupper(substr($data['other_color_value'], 0, 3)),
+                    'code'         => $this->uniqueCode($colorAttr->id, $data['other_color_value']),
                     'hex_color'    => $data['other_color_hex'],
                     'is_active'    => true,
                 ]));
@@ -68,7 +68,7 @@ class ProductVariantService
                 $materials->push(AttributeValue::create([
                     'attribute_id' => $materialAttr->id,
                     'value'        => $data['other_material_value'],
-                    'code'         => strtoupper(substr($data['other_material_value'], 0, 3)),
+                    'code'         => $this->uniqueCode($materialAttr->id, $data['other_material_value']),
                     'is_active'    => true,
                 ]));
             }
@@ -155,5 +155,19 @@ class ProductVariantService
                 'skipped' => $skippedCount,
             ];
         });
+    }
+
+    private function uniqueCode(int $attributeId, string $value): string
+    {
+        $base = strtoupper(substr($value, 0, 3));
+        $code = $base;
+        $i    = 2;
+
+        while (AttributeValue::where('attribute_id', $attributeId)->where('code', $code)->exists()) {
+            $code = $base . $i;
+            $i++;
+        }
+
+        return $code;
     }
 }

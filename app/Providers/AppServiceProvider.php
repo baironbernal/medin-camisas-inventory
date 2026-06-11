@@ -8,6 +8,7 @@ use App\Models\Movement;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\User;
 use App\Observers\InventoryObserver;
 use App\Observers\OrderObserver;
 use App\Policies\DiscountRulePolicy;
@@ -15,6 +16,7 @@ use App\Policies\InventoryPolicy;
 use App\Policies\MovementPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\StorePolicy;
+use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -41,5 +43,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Movement::class, MovementPolicy::class);
         Gate::policy(Store::class, StorePolicy::class);
         Gate::policy(DiscountRule::class, DiscountRulePolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
     }
 }

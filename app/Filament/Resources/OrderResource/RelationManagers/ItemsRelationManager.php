@@ -99,30 +99,29 @@ class ItemsRelationManager extends RelationManager
                         $discountId = $state ? (int) $state : null;
                         $unitPrice  = (float) $record->unit_price;
 
+                        // Base for manual discount is the cart/volume discounted price,
+                        // not the raw unit price — so manual discounts stack on top of
+                        // the existing volume discount instead of overriding it.
+                        $cartDiscountedPrice = $unitPrice * (1 - (float) $record->discount_percentage / 100);
+
                         if ($discountId) {
                             $discount = Discount::find($discountId);
                             if ($discount) {
                                 if ($discount->type === 'percentage') {
-                                    $discountedUnit = $unitPrice * (1 - (float) $discount->value / 100);
-                                    $percentage     = (float) $discount->value;
+                                    $discountedUnit = $cartDiscountedPrice * (1 - (float) $discount->value / 100);
                                 } else {
-                                    $discountedUnit = max(0, $unitPrice - (float) $discount->value);
-                                    $percentage     = $unitPrice > 0
-                                        ? round((($unitPrice - $discountedUnit) / $unitPrice) * 100, 2)
-                                        : 0;
+                                    $discountedUnit = max(0, $cartDiscountedPrice - (float) $discount->value);
                                 }
                             } else {
-                                $discountedUnit = $unitPrice;
-                                $percentage     = 0;
+                                $discountedUnit = $cartDiscountedPrice;
                             }
                         } else {
-                            $discountedUnit = $unitPrice;
-                            $percentage     = 0;
+                            // No manual discount — restore the cart-discounted price
+                            $discountedUnit = $cartDiscountedPrice;
                         }
 
                         $record->update([
                             'discount_id'            => $discountId,
-                            'discount_percentage'    => $percentage,
                             'discounted_unit_price'  => $discountedUnit,
                             'discounted_total_price' => $discountedUnit * $record->quantity,
                         ]);

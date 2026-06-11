@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Order;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -133,6 +134,12 @@ class OrderResource extends Resource
                         'cancelled' => 'Cancelado',
                         default => $state,
                     }),
+                Tables\Columns\TextColumn::make('user.full_name')
+                    ->label('Mayorista')
+                    ->placeholder('Sin asignar')
+                    ->badge()
+                    ->color('info')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha')
                     ->dateTime('d/m/Y H:i')
@@ -169,6 +176,40 @@ class OrderResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('assign_wholesaler')
+                    ->label(fn (Order $record): string => $record->user_id ? 'Cambiar Mayorista' : 'Asignar Mayorista')
+                    ->icon('heroicon-o-user-plus')
+                    ->color('info')
+                    ->modalHeading('Asociar Mayorista al Pedido')
+                    ->modalWidth('md')
+                    ->form([
+                        Forms\Components\Select::make('user_id')
+                            ->label('Mayorista')
+                            ->options(fn () => User::role('wholesaler')
+                                ->where('is_active', true)
+                                ->get()
+                                ->mapWithKeys(fn (User $u) => [
+                                    $u->id => "{$u->full_name} — {$u->phone_number}",
+                                ])
+                                ->toArray()
+                            )
+                            ->placeholder('Sin mayorista')
+                            ->searchable()
+                            ->nullable(),
+                    ])
+                    ->mountUsing(fn (Forms\Form $form, Order $record) => $form->fill([
+                        'user_id' => $record->user_id,
+                    ]))
+                    ->action(function (Order $record, array $data): void {
+                        $record->update(['user_id' => $data['user_id']]);
+                        $label = $data['user_id']
+                            ? User::find($data['user_id'])?->full_name
+                            : null;
+                        Notification::make()
+                            ->title($label ? "Mayorista asignado: {$label}" : 'Mayorista desvinculado')
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('confirm_order')
                     ->label('Confirmar')
                     ->icon('heroicon-o-check-badge')

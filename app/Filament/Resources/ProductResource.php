@@ -151,6 +151,11 @@ class ProductResource extends Resource
                     ->money('COP')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('variants_count')
+                    ->label('Variantes')
+                    ->counts('variants')
+                    ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                    ->alignCenter(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Activo')
                     ->boolean(),

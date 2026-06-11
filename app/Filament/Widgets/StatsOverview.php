@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
+use App\Services\SalesRevenueService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -30,7 +31,7 @@ class StatsOverview extends BaseWidget
             ->where('orders.created_at', '>=', $dateFilter);
 
         $salesCount = $orderItemsQuery->sum('quantity');
-        $salesRevenue = $orderItemsQuery->sum('order_items.total_price');
+        $salesRevenue = SalesRevenueService::forPeriod($dateFilter);
         $orderCount = $ordersQuery->count();
 
         $topSellingProducts = OrderItem::select('product_name')
