@@ -95,7 +95,7 @@ class ProductResource extends JsonResource
             $segments = [];
             foreach ($attributeOrder as $name) {
                 if (array_key_exists($name, $attrMap)) {
-                    $segments[] = $attrMap[$name];
+                    $segments[] = $this->normalizeSegment($attrMap[$name]);
                 }
             }
 
@@ -110,5 +110,46 @@ class ProductResource extends JsonResource
         }
 
         return $index;
+    }
+
+    /**
+     * Normalizes a segment value for combination index key consistency:
+     * - Force UTF-8 encoding
+     * - Transliterate/remove accents (tildes)
+     * - Convert to UPPERCASE
+     * - Strip all whitespace
+     * - Strip any character that is not alphanumeric, hyphen, or underscore
+     */
+    private function normalizeSegment($value): string
+    {
+        $str = (string)$value;
+
+        // Transliterator removes accents and converts to ASCII (Latin-ASCII) and uppercase
+        if (class_exists('Transliterator')) {
+            $transliterator = \Transliterator::create('Any-Latin; Latin-ASCII; Upper');
+            if ($transliterator) {
+                $str = $transliterator->transliterate($str);
+            }
+        } else {
+            // Manual fallback for removing accents and uppercase
+            $unwanted_array = [
+                'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C',
+                'È'=>'E', 'É'=>'E', 'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O',
+                'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U', 'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a',
+                'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c', 'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i',
+                'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o', 'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u',
+                'û'=>'u', 'ü'=>'u', 'y'=>'y', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y'
+            ];
+            $str = strtr($str, $unwanted_array);
+            $str = strtoupper($str);
+        }
+
+        // Remove all whitespace
+        $str = preg_replace('/\s+/', '', $str);
+
+        // Keep only alphanumeric characters, hyphens, and underscores
+        $str = preg_replace('/[^A-Z0-9_-]/', '', $str);
+
+        return $str;
     }
 }
