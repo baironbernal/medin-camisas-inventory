@@ -14,8 +14,17 @@ class AdvancedStatsOverviewWidget extends BaseWidget
 {
     protected static ?int $sort = -3;
 
+    // Livewire property — wired to the month <select> in the view
+    public ?string $filter = null;
+
     // Statuses that count as a "confirmed sale"
     private const SALE_STATUSES = ['confirmed', 'processing', 'completed'];
+
+    // Re-run getStats() whenever the filter select changes
+    public function updatedFilter(): void
+    {
+        $this->cachedStats = null;
+    }
 
     protected function getFilters(): array
     {

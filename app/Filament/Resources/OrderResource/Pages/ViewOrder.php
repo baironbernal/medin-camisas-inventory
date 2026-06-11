@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\User;
 use Filament\Actions;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\ImageEntry;
@@ -107,20 +108,21 @@ class ViewOrder extends ViewRecord
                 ->modalHeading('Editar Dirección de Envío')
                 ->modalWidth('lg')
                 ->form([
-                    TextInput::make('address')
-                        ->label('Dirección / Descripción')
-                        ->columnSpanFull(),
-                    TextInput::make('city')
-                        ->label('Ciudad'),
-                    TextInput::make('state')
-                        ->label('Departamento'),
-                    TextInput::make('postal_code')
-                        ->label('Código Postal'),
-                    TextInput::make('country')
-                        ->label('País')
-                        ->default('Colombia'),
+                    Grid::make(2)->schema([
+                        TextInput::make('address')
+                            ->label('Dirección / Descripción')
+                            ->columnSpanFull(),
+                        TextInput::make('city')
+                            ->label('Ciudad'),
+                        TextInput::make('state')
+                            ->label('Departamento'),
+                        TextInput::make('postal_code')
+                            ->label('Código Postal'),
+                        TextInput::make('country')
+                            ->label('País')
+                            ->default('Colombia'),
+                    ]),
                 ])
-                ->columns(2)
                 ->mountUsing(function (\Filament\Forms\Form $form): void {
                     $addr = $this->record->shipping_address ?? [];
                     $form->fill([
