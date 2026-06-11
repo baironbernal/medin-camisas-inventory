@@ -8,6 +8,8 @@ use App\Models\User;
 use Filament\Actions;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -98,6 +100,46 @@ class ViewOrder extends ViewRecord
                     $this->refreshFormData(['user_id']);
                 }),
 
+            Actions\Action::make('edit_address')
+                ->label('Editar Dirección')
+                ->icon('heroicon-o-map-pin')
+                ->color('gray')
+                ->modalHeading('Editar Dirección de Envío')
+                ->modalWidth('lg')
+                ->form([
+                    TextInput::make('address')
+                        ->label('Dirección / Descripción')
+                        ->columnSpanFull(),
+                    TextInput::make('city')
+                        ->label('Ciudad'),
+                    TextInput::make('state')
+                        ->label('Departamento'),
+                    TextInput::make('postal_code')
+                        ->label('Código Postal'),
+                    TextInput::make('country')
+                        ->label('País')
+                        ->default('Colombia'),
+                ])
+                ->columns(2)
+                ->mountUsing(function (\Filament\Forms\Form $form): void {
+                    $addr = $this->record->shipping_address ?? [];
+                    $form->fill([
+                        'address'     => $addr['address']     ?? $addr['description'] ?? '',
+                        'city'        => $addr['city']        ?? '',
+                        'state'       => $addr['state']       ?? $addr['department']  ?? '',
+                        'postal_code' => $addr['postal_code'] ?? '',
+                        'country'     => $addr['country']     ?? 'Colombia',
+                    ]);
+                })
+                ->action(function (array $data): void {
+                    $existing = $this->record->shipping_address ?? [];
+                    $this->record->update([
+                        'shipping_address' => array_merge($existing, array_filter($data, fn ($v) => $v !== null && $v !== '')),
+                    ]);
+                    Notification::make()->title('Dirección actualizada')->success()->send();
+                    $this->refreshFormData(['shipping_address']);
+                }),
+
             Actions\EditAction::make()->label('Editar'),
 
             Actions\Action::make('imprimir')
@@ -145,6 +187,19 @@ class ViewOrder extends ViewRecord
                         TextEntry::make('created_at')->label('Fecha')->dateTime('d/m/Y H:i'),
                     ])
                     ->columns(2),
+
+                Section::make('Comprobante de Pago')
+                    ->schema([
+                        ImageEntry::make('payment_proof_path')
+                            ->label('')
+                            ->disk('public')
+                            ->height(400)
+                            ->extraImgAttributes(['style' => 'border-radius:8px;object-fit:contain;max-width:100%;'])
+                            ->placeholder('Sin comprobante adjunto')
+                            ->columnSpanFull(),
+                    ])
+                    ->hidden(fn (Order $record): bool => ! $record->payment_proof_path)
+                    ->collapsible(),
 
                 Section::make('Dirección de Envío')
                     ->schema([

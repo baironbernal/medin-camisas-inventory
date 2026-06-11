@@ -2,265 +2,368 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Packing Slip - {{ $order->order_number }}</title>
+    <title>Factura - {{ $order->order_number }}</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.3;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            background: #fff;
+            color: #000;
         }
-        
+
         .page {
-            width: 100mm;
-            min-height: 180mm;
-            padding: 10mm;
+            width: 860px;
             margin: 0 auto;
-            background: white;
+            padding: 18px;
+            background: #fff;
         }
-        
+
+        /* ── Header ─────────────────────────────────────────── */
         .header {
-            text-align: center;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 6px;
         }
-        
-        .company-name {
+
+        .logo-block img {
+            height: 80px;
+        }
+
+        .company-info {
+            text-align: right;
+            font-size: 10.5px;
+            line-height: 1.6;
+        }
+
+        .company-info .company-name {
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .company-info .divider {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 4px 0;
+        }
+
+        /* ── Red bar ─────────────────────────────────────────── */
+        .red-bar {
+            height: 4px;
+            background: #8B1A1A;
+            margin-bottom: 0;
+        }
+
+        /* ── Main table wrapper ──────────────────────────────── */
+        .invoice-wrap {
+            border: 1.5px solid #000;
+            border-top: none;
+        }
+
+        /* ── Title row ───────────────────────────────────────── */
+        .title-row {
+            display: flex;
+            border-bottom: 1.5px solid #000;
+        }
+
+        .title-main {
+            flex: 1;
+            text-align: center;
+            padding: 8px 4px;
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 3px;
+            letter-spacing: 1px;
+            border-right: 1.5px solid #000;
         }
-        
-        .order-title {
-            font-size: 16px;
+
+        .title-label {
+            width: 120px;
+            text-align: center;
+            padding: 8px 4px;
+            font-size: 11px;
             font-weight: bold;
+            border-right: 1.5px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
-        .order-number {
-            font-size: 14px;
-            margin-top: 5px;
+
+        .title-number {
+            width: 130px;
+            text-align: center;
+            padding: 8px 4px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #8B1A1A;
+            background: #fdf8e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
-        .info-grid {
-            display: table;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        
+
+        /* ── Info rows ───────────────────────────────────────── */
         .info-row {
-            display: table-row;
+            display: flex;
+            border-bottom: 1.5px solid #000;
         }
-        
-        .info-cell {
-            display: table-cell;
-            width: 50%;
-            padding: 4px;
-            vertical-align: top;
-        }
-        
-        .info-label {
+
+        .info-cell-label {
+            width: 80px;
             font-weight: bold;
-            color: #333;
+            padding: 5px 8px;
+            border-right: 1.5px solid #000;
+            background: #f9f9f9;
         }
-        
+
+        .info-cell-value {
+            flex: 1;
+            padding: 5px 8px;
+            font-weight: bold;
+            border-right: 1.5px solid #000;
+        }
+
+        .info-cell-label-right {
+            width: 80px;
+            font-weight: bold;
+            padding: 5px 8px;
+            border-right: 1.5px solid #000;
+            background: #f9f9f9;
+            text-align: right;
+        }
+
+        .info-cell-value-right {
+            width: 180px;
+            padding: 5px 8px;
+            font-weight: bold;
+            text-align: center;
+            color: #8B1A1A;
+        }
+
+        /* ── Empty spacer row ────────────────────────────────── */
+        .spacer-row {
+            height: 10px;
+            border-bottom: 1.5px solid #000;
+        }
+
+        /* ── Items table ─────────────────────────────────────── */
         .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
         }
-        
-        .items-table th {
-            background: #f5f5f5;
-            border: 1px solid #333;
-            padding: 6px;
-            text-align: left;
+
+        .items-table thead tr th {
+            background: #8B1A1A;
+            color: #fff;
+            padding: 5px 8px;
             font-weight: bold;
-        }
-        
-        .items-table td {
-            border: 1px solid #333;
-            padding: 6px;
-        }
-        
-        .items-table .qty {
+            font-size: 11px;
+            border-right: 1px solid #6b1111;
             text-align: center;
-            width: 50px;
         }
-        
-        .items-table .sku {
-            font-size: 10px;
+
+        .items-table thead tr th:first-child  { width: 80px; }
+        .items-table thead tr th:nth-child(2) { text-align: left; }
+        .items-table thead tr th:nth-child(3) { width: 130px; }
+        .items-table thead tr th:last-child   { width: 130px; border-right: none; }
+
+        .items-table tbody tr td {
+            border-bottom: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+            padding: 4px 8px;
+            height: 22px;
+            vertical-align: middle;
         }
-        
-        .totals {
-            text-align: right;
-            margin-bottom: 15px;
+
+        .items-table tbody tr td:first-child  { text-align: center; font-weight: bold; }
+        .items-table tbody tr td:nth-child(3),
+        .items-table tbody tr td:last-child   { text-align: right; }
+        .items-table tbody tr td:last-child   { border-right: none; }
+
+        /* ── Payment / notes row ─────────────────────────────── */
+        .payment-row {
+            border-top: 1.5px solid #000;
+            border-bottom: 1.5px solid #000;
         }
-        
-        .totals-row {
-            margin: 3px 0;
+
+        .payment-row td {
+            padding: 5px 8px;
         }
-        
-        .totals-label {
-            display: inline-block;
+
+        /* ── Footer row ──────────────────────────────────────── */
+        .footer-row {
+            display: flex;
+        }
+
+        .footer-label {
             width: 100px;
+            padding: 6px 8px;
+            font-weight: bold;
+            border-right: 1.5px solid #000;
+            background: #f9f9f9;
         }
-        
-        .totals-value {
-            display: inline-block;
+
+        .footer-value {
+            flex: 1;
+            padding: 6px 8px;
+            font-weight: bold;
+            border-right: 1.5px solid #000;
+            text-align: center;
+        }
+
+        .footer-total-label {
             width: 80px;
+            padding: 6px 8px;
+            font-weight: bold;
+            border-right: 1.5px solid #000;
             text-align: right;
         }
-        
-        .footer {
-            margin-top: 20px;
-            padding-top: 10px;
-            border-top: 1px solid #ccc;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
+
+        .footer-total-value {
+            width: 130px;
+            padding: 6px 8px;
+            font-weight: bold;
+            font-size: 13px;
+            text-align: right;
+            color: #8B1A1A;
         }
-        
+
+        /* ── Print button ────────────────────────────────────── */
+        .print-btn-wrap {
+            text-align: center;
+            margin-top: 24px;
+        }
+
+        .print-btn {
+            padding: 10px 32px;
+            font-size: 14px;
+            background: #8B1A1A;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
         @media print {
-            body {
-                margin: 0;
-            }
-            .page {
-                margin: 0;
-                width: 100%;
-            }
+            .print-btn-wrap { display: none; }
+            body { margin: 0; }
+            .page { width: 100%; padding: 8px; }
         }
     </style>
 </head>
 <body>
-    <div class="page">
-        <div class="header">
-            <div class="company-name">MEDINCAMISAS</div>
-            <div class="order-title">ORDEN DE PEDIDO / PACKING SLIP</div>
-            <div class="order-number">No. {{ $order->order_number }}</div>
+<div class="page">
+
+    {{-- ── HEADER ───────────────────────────────────────────── --}}
+    <div class="header">
+        <div class="logo-block">
+            <img src="{{ asset('images/logo-dark.png') }}" alt="MEDIN">
         </div>
-        
-        <div class="info-grid">
-            <div class="info-row">
-                <div class="info-cell">
-                    <div class="info-label">Cliente:</div>
-                    <div>{{ $order->customer_name }}</div>
-                </div>
-                <div class="info-cell">
-                    <div class="info-label">Teléfono:</div>
-                    <div>{{ $order->customer_phone }}</div>
-                </div>
-            </div>
-            <div class="info-row">
-                <div class="info-cell">
-                    <div class="info-label">Email:</div>
-                    <div>{{ $order->customer_email }}</div>
-                </div>
-                <div class="info-cell">
-                    <div class="info-label">Fecha:</div>
-                    <div>{{ $order->created_at->format('d/m/Y H:i') }}</div>
-                </div>
-            </div>
-            <div class="info-row">
-                <div class="info-cell" style="width: 100%;">
-                    <div class="info-label">Dirección de Envío:</div>
-                    @if(is_array($order->shipping_address))
-                        <div>
-                            {{ $order->shipping_address['address'] ?? '' }}<br>
-                            {{ $order->shipping_address['city'] ?? '' }}, {{ $order->shipping_address['state'] ?? '' }}<br>
-                            {{ $order->shipping_address['country'] ?? '' }} - {{ $order->shipping_address['postal_code'] ?? '' }}
-                        </div>
-                    @else
-                        <div>{{ $order->shipping_address }}</div>
-                    @endif
-                </div>
-            </div>
+        <div class="company-info">
+            <div class="company-name">Johann Camilo Medina Méndez</div>
+            <div>Nit. 1022425421-3 Régimen simplificado</div>
+            <hr class="divider">
+            <div>CC San Jose Plaza, San Andresito, Local 215 – 216</div>
+            <hr class="divider">
+            <div>✉ camisasmedin@gmail.com &nbsp;&nbsp; 𝕗 @medincamisas</div>
+            <div>📱 321 456 9004 &nbsp;&nbsp; 302 419 7103</div>
         </div>
-        
+    </div>
+
+    {{-- ── RED BAR ───────────────────────────────────────────── --}}
+    <div class="red-bar"></div>
+
+    {{-- ── INVOICE WRAPPER ──────────────────────────────────── --}}
+    <div class="invoice-wrap">
+
+        {{-- Title row --}}
+        <div class="title-row">
+            <div class="title-main">FACTURA DE VENTA</div>
+            <div class="title-label">No. Factura</div>
+            <div class="title-number">{{ $order->id }}</div>
+        </div>
+
+        {{-- Customer name / date --}}
+        <div class="info-row">
+            <div class="info-cell-label">Nombre</div>
+            <div class="info-cell-value">{{ strtoupper($order->customer_name ?? '—') }}</div>
+            <div class="info-cell-label-right">Fecha</div>
+            <div class="info-cell-value-right">{{ $order->created_at->format('d/m/Y') }}</div>
+        </div>
+
+        {{-- Contact / city --}}
+        @php
+            $addr   = $order->shipping_address ?? [];
+            $state  = $addr['state'] ?? '';
+            $city   = trim(($addr['city'] ?? '') . ($state ? ' - ' . strtoupper($state) : ''));
+            $city   = $city ?: '—';
+        @endphp
+        <div class="info-row">
+            <div class="info-cell-label">Contacto</div>
+            <div class="info-cell-value">{{ $order->customer_phone ?? '—' }}</div>
+            <div class="info-cell-label-right">Ciudad</div>
+            <div class="info-cell-value-right" style="color:#000;font-size:11px;">{{ strtoupper($city) }}</div>
+        </div>
+
+        {{-- Spacer --}}
+        <div class="spacer-row"></div>
+
+        {{-- Items table --}}
         <table class="items-table">
             <thead>
                 <tr>
-                    <th class="qty">Qty</th>
-                    <th>Producto</th>
-                    <th>SKU</th>
-                    <th>Talla/Color</th>
+                    <th>Cantidad</th>
+                    <th>Descripción</th>
+                    <th>Valor Unidad</th>
+                    <th>Valor total</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($order->items as $item)
                 <tr>
-                    <td class="qty">{{ $item->quantity }}</td>
-                    <td>{{ $item->product_name }}</td>
-                    <td class="sku">{{ $item->variant_sku }}</td>
-                    <td>
-                        @if($item->productVariant && $item->productVariant->variantAttributes)
-                            @foreach($item->productVariant->variantAttributes as $attr)
-                                {{ $attr->attributeValue->value ?? '' }}
-                                @if(!$loop->last) / @endif
-                            @endforeach
-                        @endif
-                    </td>
+                    <td>{{ $item->quantity }}</td>
+                    <td>{{ strtoupper($item->product_name) }}</td>
+                    <td>$ &nbsp;{{ number_format((float)$item->discounted_unit_price, 0, ',', '.') }}</td>
+                    <td>$ &nbsp;{{ number_format((float)$item->discounted_total_price, 0, ',', '.') }}</td>
                 </tr>
                 @endforeach
+
+                {{-- Fill empty rows up to 10 minimum lines --}}
+                @for($i = $order->items->count(); $i < 10; $i++)
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>$</td>
+                    <td>-</td>
+                </tr>
+                @endfor
+
+                {{-- Payment / notes row --}}
+                <tr class="payment-row">
+                    <td colspan="2" style="text-align:center;font-style:italic;">
+                        {{ $order->notes ?? '' }}
+                    </td>
+                    <td></td>
+                    <td>$ &nbsp;-</td>
+                </tr>
             </tbody>
         </table>
-        
-        <div class="totals">
-            <div class="totals-row">
-                <span class="totals-label">Subtotal:</span>
-                <span class="totals-value">${{ number_format($order->subtotal_original, 0, ',', '.') }}</span>
-            </div>
-            @if($order->subtotal_discounted < $order->subtotal_original)
-            <div class="totals-row">
-                <span class="totals-label">Descuento:</span>
-                <span class="totals-value">-${{ number_format($order->subtotal_original - $order->subtotal_discounted, 0, ',', '.') }}</span>
-            </div>
-            @endif
-            @if($order->shipping_cost > 0)
-            <div class="totals-row">
-                <span class="totals-label">Envío:</span>
-                <span class="totals-value">${{ number_format($order->shipping_cost, 0, ',', '.') }}</span>
-            </div>
-            @endif
-            @if($order->tax > 0)
-            <div class="totals-row">
-                <span class="totals-label">Impuesto:</span>
-                <span class="totals-value">${{ number_format($order->tax, 0, ',', '.') }}</span>
-            </div>
-            @endif
-            <div class="totals-row" style="font-weight: bold; font-size: 14px;">
-                <span class="totals-label">TOTAL:</span>
-                <span class="totals-value">${{ number_format($order->total, 0, ',', '.') }}</span>
-            </div>
+
+        {{-- Footer --}}
+        <div class="footer-row">
+            <div class="footer-label">Elaborado por</div>
+            <div class="footer-value">{{ strtoupper($preparedBy?->full_name ?? $preparedBy?->name ?? '—') }}</div>
+            <div class="footer-total-label">Total</div>
+            <div class="footer-total-value">$ {{ number_format((float)$order->total, 0, ',', '.') }}</div>
         </div>
-        
-    @if($order->notes)
-        <div style="margin-bottom: 15px;">
-            <div class="info-label">Notas:</div>
-            <div>{{ $order->notes }}</div>
-        </div>
-    @endif
-    
-    <div class="footer">
-        <p>Gracias por su compra - MEDINCAMISAS</p>
-        <p>Este documento es para uso interno del paquete</p>
+
+    </div>{{-- /invoice-wrap --}}
+
+    <div class="print-btn-wrap">
+        <button class="print-btn" onclick="window.print()">🖨️ Imprimir</button>
     </div>
-    </div>
-    
-    <div style="text-align: center; margin-top: 20px; padding: 20px;">
-        <button onclick="window.print()" style="padding: 12px 30px; font-size: 16px; cursor: pointer; background: #000; color: #fff; border: none; border-radius: 5px;">
-            🖨️ IMPRIMIR
-        </button>
-    </div>
-    
-    <script>
-        // No auto-print, user clicks button
-    </script>
+
+</div>
 </body>
 </html>

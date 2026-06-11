@@ -2,9 +2,10 @@
 
 namespace App\Services;
 
+use App\Contracts\CartPricingEngineInterface;
 use App\Models\ProductVariant;
 
-class CartService
+class CartService implements CartPricingEngineInterface
 {
     /**
      * Calculate prices, discounts and surcharges for a list of cart items.

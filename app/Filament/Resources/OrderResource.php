@@ -59,7 +59,10 @@ class OrderResource extends Resource
                     ->schema([
                         Forms\Components\KeyValue::make('shipping_address')
                             ->label('Dirección')
-                            ->disabled(),
+                            ->keyLabel('Campo')
+                            ->valueLabel('Valor')
+                            ->editableKeys(false)
+                            ->reorderable(false),
                     ]),
 
                 Forms\Components\Section::make('Totales')

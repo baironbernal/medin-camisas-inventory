@@ -16,7 +16,8 @@ class SalesRevenueService
      *
      * So summing this column gives the real money received, not the gross catalog price.
      */
-    public static function forPeriod(Carbon $from, ?Carbon $to = null): float
+    /** @param string[] $statuses  If empty, all statuses are included. */
+    public static function forPeriod(Carbon $from, ?Carbon $to = null, array $statuses = []): float
     {
         $query = OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
             ->where('orders.created_at', '>=', $from);
@@ -25,13 +26,23 @@ class SalesRevenueService
             $query->where('orders.created_at', '<=', $to);
         }
 
+        if (! empty($statuses)) {
+            $query->whereIn('orders.status', $statuses);
+        }
+
         return (float) $query->sum('order_items.discounted_total_price');
     }
 
-    public static function forDate(string $date): float
+    /** @param string[] $statuses  If empty, all statuses are included. */
+    public static function forDate(string $date, array $statuses = []): float
     {
-        return (float) OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
-            ->whereDate('orders.created_at', $date)
-            ->sum('order_items.discounted_total_price');
+        $query = OrderItem::join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->whereDate('orders.created_at', $date);
+
+        if (! empty($statuses)) {
+            $query->whereIn('orders.status', $statuses);
+        }
+
+        return (float) $query->sum('order_items.discounted_total_price');
     }
 }

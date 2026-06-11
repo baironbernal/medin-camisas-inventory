@@ -6,6 +6,7 @@ use App\Models\Discount;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
+use App\Contracts\CartPricingEngineInterface;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -86,7 +87,17 @@ class ItemsRelationManager extends RelationManager
                     ->label('Precio Unit.')
                     ->alignRight()
                     ->getStateUsing(fn (OrderItem $record): string =>
-                        '$' . number_format((float) $record->discounted_unit_price, 0, ',', '.')
+                        '$' . number_format((float) $record->unit_price, 0, ',', '.')
+                    ),
+                Tables\Columns\TextColumn::make('discount_rule_fmt')
+                    ->label('Regla')
+                    ->alignCenter()
+                    ->badge()
+                    ->color('success')
+                    ->getStateUsing(fn (OrderItem $record): string =>
+                        $record->discount_percentage > 0
+                            ? number_format((float) $record->discount_percentage, 0) . '%'
+                            : '—'
                     ),
 
                 Tables\Columns\SelectColumn::make('discount_id')
@@ -233,7 +244,7 @@ class ItemsRelationManager extends RelationManager
                             'discounted_total_price' => $unit * $qty,
                         ]);
 
-                        static::recalculateOrderById($order->id);
+                        static::recalculateAllItemDiscounts($order->id);
                         Notification::make()->title('Item agregado')->success()->send();
                     }),
             ] : [])
@@ -279,11 +290,62 @@ class ItemsRelationManager extends RelationManager
                             ]);
                         }
 
-                        static::recalculateOrderById($record->order_id);
+                        static::recalculateAllItemDiscounts($record->order_id);
                         Notification::make()->title('Item actualizado')->warning()->send();
                     }),
             ] : [])
             ->paginated(false);
+    }
+
+    /**
+     * Reapply cart pricing to every item using CartService — the same engine
+     * the frontend uses via POST /api/cart/calculate. Handles volume discounts,
+     * large-size surcharges, and everything else in one place.
+     * Manual discounts (discount_id) are preserved and stacked on top.
+     */
+    public static function recalculateAllItemDiscounts(int $orderId): void
+    {
+        $order = Order::with('items')->find($orderId);
+        if (! $order) return;
+
+        $cartItems = $order->items
+            ->map(fn ($item) => [
+                'product_variant_id' => $item->product_variant_id,
+                'quantity'           => $item->quantity,
+            ])
+            ->toArray();
+
+        $result     = app(CartPricingEngineInterface::class)->calculate($cartItems);
+        $calculated = collect($result['items'])->keyBy('product_variant_id');
+
+        foreach ($order->items as $item) {
+            $calc = $calculated->get($item->product_variant_id);
+            if (! $calc) continue;
+
+            $cartDiscountedPrice = $calc['discounted_unit_price'];
+
+            if ($item->discount_id) {
+                $manual = Discount::find($item->discount_id);
+                $finalPrice = $manual
+                    ? ($manual->type === 'percentage'
+                        ? $cartDiscountedPrice * (1 - (float) $manual->value / 100)
+                        : max(0, $cartDiscountedPrice - (float) $manual->value))
+                    : $cartDiscountedPrice;
+            } else {
+                $finalPrice = $cartDiscountedPrice;
+            }
+
+            $item->update([
+                'unit_price'             => $calc['unit_price'],
+                'discount_rule_id'       => $calc['discount_rule_id'],
+                'discount_percentage'    => $calc['discount_percentage'],
+                'discounted_unit_price'  => round($finalPrice, 2),
+                'total_price'            => $calc['total_price'],
+                'discounted_total_price' => round($finalPrice * $item->quantity, 2),
+            ]);
+        }
+
+        static::recalculateOrderById($orderId);
     }
 
     public static function recalculateOrderById(int $orderId): void

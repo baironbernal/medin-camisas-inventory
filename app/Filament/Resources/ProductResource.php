@@ -128,6 +128,12 @@ class ProductResource extends Resource
                     ->rounded()
                     ->defaultImageUrl(asset('images/placeholder.png')),
 
+                Tables\Columns\TextColumn::make('total_stock')
+                    ->label('Stock Total')
+                    ->getStateUsing(fn ($record): int => $record->total_stock)
+                    ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                    ->alignCenter(),
+
                 Tables\Columns\TextColumn::make('reference_code')
                     ->label('Código')
                     ->searchable()
@@ -151,11 +157,6 @@ class ProductResource extends Resource
                     ->money('COP')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('variants_count')
-                    ->label('Variantes')
-                    ->counts('variants')
-                    ->weight(\Filament\Support\Enums\FontWeight::Bold)
-                    ->alignCenter(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Activo')
                     ->boolean(),

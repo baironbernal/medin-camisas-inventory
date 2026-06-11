@@ -17,6 +17,8 @@ use App\Policies\MovementPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\StorePolicy;
 use App\Policies\UserPolicy;
+use App\Contracts\CartPricingEngineInterface;
+use App\Services\CartService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -27,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(CartPricingEngineInterface::class, CartService::class);
     }
 
     /**
