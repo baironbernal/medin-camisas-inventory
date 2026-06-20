@@ -2,146 +2,63 @@
 
 namespace Database\Seeders;
 
+use App\Authorization\PermissionCatalog;
+use App\Authorization\RolePresets;
+use App\Models\Permission;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\DB;
 
+/**
+ * Creates/updates roles and (re)assigns their permissions from RolePresets.
+ *
+ * Backward compatible:
+ *   - Existing roles are reused (firstOrCreate) — assignments to users are
+ *     preserved because we never delete the Role row.
+ *   - `syncPermissions()` replaces a role's permission set with the canonical
+ *     dotted permissions, completing the cutover from legacy names.
+ *   - The 'wholesaler' storefront role is intentionally left untouched.
+ *
+ * Run order: this seeder ensures the catalog is present first, so it is safe
+ * to run standalone (`--class=RolesAndPermissionsSeeder`).
+ */
 class RolesAndPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
-        // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create permissions
-        $permissions = [
-            // User management
-            'view_users',
-            'create_users',
-            'edit_users',
-            'delete_users',
+        // Ensure the permission catalog exists before assigning.
+        $this->call(PermissionCatalogSeeder::class);
 
-            // Store management
-            'view_stores',
-            'create_stores',
-            'edit_stores',
-            'delete_stores',
-            'view_all_stores',
+        $guard       = PermissionCatalog::GUARD;
+        $allCatalog  = PermissionCatalog::names();
 
-            // Product management
-            'view_products',
-            'create_products',
-            'edit_products',
-            'delete_products',
-            'manage_prices',
+        foreach (RolePresets::map() as $roleName => $permissions) {
+            $role = Role::firstOrCreate(
+                ['name' => $roleName, 'guard_name' => $guard]
+            );
 
-            // Inventory management
-            'view_inventory',
-            'edit_inventory',
-            'adjust_inventory',
-            'transfer_inventory',
-            'view_all_inventory',
+            $names = $permissions === RolePresets::ALL
+                ? $allCatalog
+                : $permissions;
 
-            // Movement management
-            'view_movements',
-            'create_movements',
-            'edit_movements',
-            'delete_movements',
-            'approve_transfers',
+            // Guard against typos in presets — only sync names that truly exist.
+            $valid = Permission::where('guard_name', $guard)
+                ->whereIn('name', $names)
+                ->pluck('name')
+                ->all();
 
-            // Reports
-            'view_reports',
-            'export_reports',
-            'view_financial_reports',
+            if ($missing = array_diff($names, $valid)) {
+                $this->command?->warn(
+                    "Role [{$roleName}] references unknown permissions: " . implode(', ', $missing)
+                );
+            }
 
-            // System settings
-            'manage_settings',
-            'manage_seasons',
-            'manage_categories',
-            'manage_attributes',
+            $role->syncPermissions($valid);
 
-            //Rules
-            'view_discount_rules',
-            'create_discount_rules',
-            'edit_discount_rules',
-            'update_discount_rules',
-            'delete_discount_rules',
-        ];
-
-        foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            $this->command?->info("Role [{$roleName}] synced with " . count($valid) . ' permissions.');
         }
 
-        // Create roles and assign permissions
-
-        // Owner - Full access
-        $owner = Role::create(['name' => 'owner']);
-        $owner->givePermissionTo(Permission::all());
-
-        // Admin - Almost full access
-        $admin = Role::create(['name' => 'admin']);
-        $admin->givePermissionTo(Permission::all());
-
-        // Inventory Manager - Manage inventory across all stores
-        $inventoryManager = Role::create(['name' => 'inventory_manager']);
-        $inventoryManager->givePermissionTo([
-            'view_stores',
-            'view_all_stores',
-            'view_products',
-            'create_products',
-            'edit_products',
-            'manage_prices',
-            'view_inventory',
-            'edit_inventory',
-            'adjust_inventory',
-            'transfer_inventory',
-            'view_all_inventory',
-            'view_movements',
-            'create_movements',
-            'approve_transfers',
-            'view_reports',
-            'export_reports',
-            'manage_categories',
-            'manage_attributes',
-            'view_discount_rules',
-            'create_discount_rules',
-            'edit_discount_rules',
-            'update_discount_rules',
-            'delete_discount_rules',
-        ]);
-
-        // Store Supervisor - Manage single store
-        $storeSupervisor = Role::create(['name' => 'store_supervisor']);
-        $storeSupervisor->givePermissionTo([
-            'view_stores',
-            'view_products',
-            'view_inventory',
-            'edit_inventory',
-            'adjust_inventory',
-            'transfer_inventory',
-            'view_movements',
-            'create_movements',
-            'view_reports',
-        ]);
-
-        // Warehouse Operator - Basic inventory operations
-        $warehouseOperator = Role::create(['name' => 'warehouse_operator']);
-        $warehouseOperator->givePermissionTo([
-            'view_products',
-            'view_inventory',
-            'edit_inventory',
-            'view_movements',
-            'create_movements',
-        ]);
-
-        // Seller - Read only access
-        $seller = Role::create(['name' => 'seller']);
-        $seller->givePermissionTo([
-            'view_products',
-            'view_inventory',
-        ]);
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }
-
-

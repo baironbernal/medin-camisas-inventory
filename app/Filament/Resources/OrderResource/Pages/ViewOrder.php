@@ -12,6 +12,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\KeyValueEntry;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
@@ -21,6 +22,11 @@ use Filament\Resources\Pages\ViewRecord;
 class ViewOrder extends ViewRecord
 {
     protected static string $resource = OrderResource::class;
+
+    public function getRelationManagers(): array
+    {
+        return [];
+    }
 
     protected function getHeaderActions(): array
     {
@@ -32,7 +38,8 @@ class ViewOrder extends ViewRecord
                 ->modalHeading('Confirmar pedido')
                 ->modalDescription('Sube el comprobante de pago antes de confirmar. El inventario se descontará automáticamente.')
                 ->modalSubmitActionLabel('Confirmar y guardar comprobante')
-                ->visible(fn (Order $record): bool => $record->status === Order::STATUS_PENDING)
+                ->visible(fn (Order $record): bool => $record->status === Order::STATUS_PENDING
+                    && auth()->user()->can('changeStatus', $record))
                 ->form([
                     FileUpload::make('payment_proof_path')
                         ->label('Comprobante de pago')
@@ -58,7 +65,7 @@ class ViewOrder extends ViewRecord
                 ->requiresConfirmation()
                 ->modalHeading('¿Cancelar el pedido?')
                 ->modalDescription('El pedido se cancelará. El inventario no se verá afectado.')
-                ->visible(fn (Order $record): bool => $record->canBeCancelled())
+                ->visible(fn (Order $record): bool => auth()->user()->can('cancel', $record))
                 ->action(function (Order $record): void {
                     $record->update(['status' => Order::STATUS_CANCELLED]);
                     Notification::make()->title('Pedido cancelado')->warning()->send();
@@ -69,6 +76,7 @@ class ViewOrder extends ViewRecord
                 ->label(fn (): string => $this->record->user_id ? 'Cambiar Mayorista' : 'Asignar Mayorista')
                 ->icon('heroicon-o-user-plus')
                 ->color('info')
+                ->visible(fn (): bool => auth()->user()->can('assign', $this->record))
                 ->modalHeading('Asociar Mayorista al Pedido')
                 ->modalWidth('md')
                 ->form([
@@ -206,6 +214,57 @@ class ViewOrder extends ViewRecord
                 Section::make('Dirección de Envío')
                     ->schema([
                         KeyValueEntry::make('shipping_address')->label('Dirección'),
+                    ]),
+
+                Section::make('Productos del Pedido')
+                    ->schema([
+                        RepeatableEntry::make('items')
+                            ->label('')
+                            ->schema([
+                                ImageEntry::make('variant_image')
+                                    ->label('Foto')
+                                    ->disk('public')
+                                    ->height(56)
+                                    ->square()
+                                    ->extraImgAttributes(['style' => 'border-radius:8px;object-fit:cover;'])
+                                    ->state(fn ($record): ?string => is_array($record->productVariant?->images) && ! empty($record->productVariant->images)
+                                        ? $record->productVariant->images[0]
+                                        : null),
+                                TextEntry::make('product_name')
+                                    ->label('Producto')
+                                    ->weight(\Filament\Support\Enums\FontWeight::Medium),
+                                TextEntry::make('variant_sku')
+                                    ->label('SKU')
+                                    ->color('gray'),
+                                TextEntry::make('color')
+                                    ->label('Color')
+                                    ->html()
+                                    ->state(function ($record): string {
+                                        $colorAttr = $record->productVariant?->variantAttributes
+                                            ->first(fn ($va) => optional($va->attribute)->code === 'COLOR');
+                                        $hex  = $colorAttr?->attributeValue?->hex_color;
+                                        $name = $colorAttr?->attributeValue?->value ?? '—';
+                                        $swatch = $hex
+                                            ? "<span style=\"display:inline-block;width:18px;height:18px;border-radius:50%;background:{$hex};border:1px solid #d1d5db;vertical-align:middle;margin-right:6px;\"></span>"
+                                            : '';
+                                        return "{$swatch}<span style=\"vertical-align:middle;\">{$name}</span>";
+                                    }),
+                                TextEntry::make('quantity')
+                                    ->label('Cant.'),
+                                TextEntry::make('discounted_unit_price')
+                                    ->label('Precio Unit.')
+                                    ->money('COP'),
+                                TextEntry::make('discount_percentage')
+                                    ->label('Desc.')
+                                    ->formatStateUsing(fn ($state): string => $state > 0 ? number_format((float) $state, 0) . '%' : '—'),
+                                TextEntry::make('discounted_total_price')
+                                    ->label('Subtotal')
+                                    ->money('COP')
+                                    ->weight(\Filament\Support\Enums\FontWeight::SemiBold),
+                            ])
+                            ->columns(8)
+                            ->columnSpanFull()
+                            ->contained(false),
                     ]),
 
                 Section::make('Totales')

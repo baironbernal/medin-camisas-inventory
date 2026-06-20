@@ -5,37 +5,20 @@ namespace App\Policies;
 use App\Models\Store;
 use App\Models\User;
 
-class StorePolicy
+class StorePolicy extends BasePolicy
 {
-    public function viewAny(User $user): bool
-    {
-        return $user->can('view_stores');
-    }
+    protected string $module = 'stores';
 
-    public function view(User $user, Store $store): bool
+    /**
+     * A user can view a store if they have cross-store access
+     * (stores.view_all) or it is the store assigned to them.
+     */
+    public function view(User $user, $store): bool
     {
-        if ($user->can('view_all_stores')) {
+        if ($this->allows($user, 'view_all')) {
             return true;
         }
 
-        return $user->can('view_stores') &&
-               $user->canAccessStore($store);
-    }
-
-    public function create(User $user): bool
-    {
-        return $user->can('create_stores');
-    }
-
-    public function update(User $user, Store $store): bool
-    {
-        return $user->can('edit_stores');
-    }
-
-    public function delete(User $user, Store $store): bool
-    {
-        return $user->can('delete_stores');
+        return $this->allows($user, 'view') && $user->canAccessStore($store);
     }
 }
-
-

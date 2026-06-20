@@ -4,30 +4,21 @@ namespace App\Policies;
 
 use App\Models\User;
 
-class UserPolicy
+class UserPolicy extends BasePolicy
 {
-    public function viewAny(User $user): bool
+    protected string $module = 'users';
+
+    /**
+     * A user may never delete their own account, even with the permission.
+     */
+    public function delete(User $user, $model): bool
     {
-        return $user->can('view_users');
+        return $this->allows($user, 'delete') && $user->id !== $model->id;
     }
 
-    public function view(User $user, User $model): bool
+    /** Assign/revoke roles and permissions to other users. */
+    public function manageRoles(User $user): bool
     {
-        return $user->can('view_users');
-    }
-
-    public function create(User $user): bool
-    {
-        return $user->can('create_users');
-    }
-
-    public function update(User $user, User $model): bool
-    {
-        return $user->can('edit_users');
-    }
-
-    public function delete(User $user, User $model): bool
-    {
-        return $user->can('delete_users') && $user->id !== $model->id;
+        return $this->allows($user, 'manage_roles');
     }
 }

@@ -183,6 +183,7 @@ class OrderResource extends Resource
                     ->label(fn (Order $record): string => $record->user_id ? 'Cambiar Mayorista' : 'Asignar Mayorista')
                     ->icon('heroicon-o-user-plus')
                     ->color('info')
+                    ->visible(fn (Order $record): bool => auth()->user()->can('assign', $record))
                     ->modalHeading('Asociar Mayorista al Pedido')
                     ->modalWidth('md')
                     ->form([
@@ -219,7 +220,8 @@ class OrderResource extends Resource
                     ->color('success')
                     ->requiresConfirmation()
                     ->modalDescription('El inventario se descontará automáticamente al confirmar.')
-                    ->visible(fn (Order $record): bool => $record->status === Order::STATUS_PENDING)
+                    ->visible(fn (Order $record): bool => $record->status === Order::STATUS_PENDING
+                        && auth()->user()->can('changeStatus', $record))
                     ->action(function (Order $record): void {
                         $record->update(['status' => Order::STATUS_CONFIRMED]);
                         Notification::make()->title('Pedido confirmado — inventario descontado')->success()->send();

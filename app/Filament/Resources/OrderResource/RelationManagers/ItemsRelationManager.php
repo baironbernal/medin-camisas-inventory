@@ -29,7 +29,10 @@ class ItemsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        $user      = auth()->user();
         $isPending = $this->ownerRecord->status === Order::STATUS_PENDING;
+        $canAdd    = $isPending && $user->can('addProducts', $this->ownerRecord);
+        $canModify = $isPending && $user->can('modifyQuantities', $this->ownerRecord);
 
         return $table
             ->modifyQueryUsing(fn ($query) => $query->with([
@@ -105,7 +108,7 @@ class ItemsRelationManager extends RelationManager
                     ->options(fn (): array => Discount::active()->pluck('name', 'id')->toArray())
                     ->placeholder('Sin descuento')
                     ->selectablePlaceholder(true)
-                    ->disabled(! $isPending)
+                    ->disabled(! $canModify)
                     ->afterStateUpdated(function ($state, OrderItem $record): void {
                         $discountId = $state ? (int) $state : null;
                         $unitPrice  = (float) $record->unit_price;
@@ -148,7 +151,7 @@ class ItemsRelationManager extends RelationManager
                         '$' . number_format((float) $record->discounted_total_price, 0, ',', '.')
                     ),
             ])
-            ->headerActions($isPending ? [
+            ->headerActions($canAdd ? [
                 Tables\Actions\Action::make('add_item')
                     ->label('Agregar Item')
                     ->icon('heroicon-o-plus-circle')
@@ -248,7 +251,7 @@ class ItemsRelationManager extends RelationManager
                         Notification::make()->title('Item agregado')->success()->send();
                     }),
             ] : [])
-            ->actions($isPending ? [
+            ->actions($canModify ? [
                 Tables\Actions\Action::make('reduce')
                     ->label('Quitar')
                     ->icon('heroicon-o-trash')

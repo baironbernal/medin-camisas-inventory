@@ -5,63 +5,50 @@ namespace App\Policies;
 use App\Models\Inventory;
 use App\Models\User;
 
-class InventoryPolicy
+class InventoryPolicy extends BasePolicy
 {
-    public function viewAny(User $user): bool
-    {
-        return $user->can('view_inventory');
-    }
+    protected string $module = 'inventory';
 
-    public function view(User $user, Inventory $inventory): bool
+    public function view(User $user, $inventory): bool
     {
-        if ($user->can('view_all_inventory')) {
+        if ($this->allows($user, 'view_all')) {
             return true;
         }
 
-        return $user->can('view_inventory') &&
-               $user->canAccessStore($inventory->store);
+        return $this->allows($user, 'view') && $user->canAccessStore($inventory->store);
     }
 
-    public function create(User $user): bool
+    public function update(User $user, $inventory): bool
     {
-        return $user->can('edit_inventory');
+        return $this->allows($user, 'update') && $this->scopedToStore($user, $inventory);
     }
 
-    public function update(User $user, Inventory $inventory): bool
-    {
-        if ($user->can('edit_inventory')) {
-            if ($user->hasRole(['owner', 'admin', 'inventory_manager'])) {
-                return true;
-            }
-
-            return $user->canAccessStore($inventory->store);
-        }
-
-        return false;
-    }
-
-    public function delete(User $user, Inventory $inventory): bool
-    {
-        return $user->hasRole(['owner', 'admin']);
-    }
-
+    /** Stock adjustments / corrections. */
     public function adjust(User $user, Inventory $inventory): bool
     {
-        if ($user->can('adjust_inventory')) {
-            if ($user->hasRole(['owner', 'admin', 'inventory_manager'])) {
-                return true;
-            }
-
-            return $user->canAccessStore($inventory->store);
-        }
-
-        return false;
+        return $this->allows($user, 'adjust') && $this->scopedToStore($user, $inventory);
     }
 
-    public function transfer(User $user, Inventory $inventory): bool
+    /** Register an inbound stock entry. */
+    public function createEntry(User $user, ?Inventory $inventory = null): bool
     {
-        return $user->can('transfer_inventory');
+        return $this->allows($user, 'entries') && (! $inventory || $this->scopedToStore($user, $inventory));
+    }
+
+    /** Register an outbound stock exit. */
+    public function createExit(User $user, ?Inventory $inventory = null): bool
+    {
+        return $this->allows($user, 'exits') && (! $inventory || $this->scopedToStore($user, $inventory));
+    }
+
+    public function transfer(User $user, ?Inventory $inventory = null): bool
+    {
+        return $this->allows($user, 'transfer');
+    }
+
+    /** Cross-store access OR the record belongs to the user's assigned store. */
+    protected function scopedToStore(User $user, Inventory $inventory): bool
+    {
+        return $this->allows($user, 'view_all') || $user->canAccessStore($inventory->store);
     }
 }
-
-

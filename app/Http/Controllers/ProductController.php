@@ -119,7 +119,7 @@ class ProductController extends Controller implements HasMiddleware
             }]) 
 
             ->with(['category'])
-            ->paginate(10);
+            ->paginate((int) min(max(1, $request->input('per_page', 100)), 200));
 
         return response()->json($products);
     }

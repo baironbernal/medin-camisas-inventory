@@ -80,9 +80,14 @@ class User extends Authenticatable implements FilamentUser
         return "{$this->first_name} {$this->last_name}";
     }
 
+    /**
+     * Whether the user may access a given store. Permission-based: holders of
+     * `stores.view_all` reach every store; everyone else is limited to their
+     * assigned store. No role names are hardcoded here.
+     */
     public function canAccessStore(Store $store): bool
     {
-        if ($this->hasRole(['owner', 'admin', 'inventory_manager'])) {
+        if ($this->can('stores.view_all')) {
             return true;
         }
 

@@ -5,42 +5,40 @@ namespace App\Policies;
 use App\Models\Product;
 use App\Models\User;
 
-class ProductPolicy
+class ProductPolicy extends BasePolicy
 {
-    public function viewAny(User $user): bool
+    protected string $module = 'products';
+
+    /** View commercial prices / costs. */
+    public function viewPrices(User $user): bool
     {
-        return $user->can('view_products');
+        return $this->allows($user, 'view_prices');
     }
 
-    public function view(User $user, Product $product): bool
+    /** View stock / availability figures. */
+    public function viewStock(User $user): bool
     {
-        return $user->can('view_products');
+        return $this->allows($user, 'view_stock');
     }
 
-    public function create(User $user): bool
+    /** Manage attributes and variants. */
+    public function manageAttributes(User $user): bool
     {
-        return $user->can('create_products');
+        return $this->allows($user, 'manage_attributes');
     }
 
-    public function update(User $user, Product $product): bool
+    public function duplicate(User $user, Product $product): bool
     {
-        return $user->can('edit_products');
+        return $this->allows($user, 'duplicate');
     }
 
-    public function delete(User $user, Product $product): bool
+    public function export(User $user): bool
     {
-        return $user->can('delete_products');
+        return $this->allows($user, 'export');
     }
 
-    public function restore(User $user, Product $product): bool
+    public function import(User $user): bool
     {
-        return $user->can('delete_products');
-    }
-
-    public function forceDelete(User $user, Product $product): bool
-    {
-        return $user->can('delete_products');
+        return $this->allows($user, 'import');
     }
 }
-
-

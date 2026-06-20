@@ -26,7 +26,8 @@ class UserResource extends Resource
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->hasRole(['owner', 'admin']) ?? false;
+        // Permission-based; owner/admin pass via the Gate::before super-grant.
+        return auth()->user()?->can('users.view_any') ?? false;
     }
 
     public static function form(Form $form): Form
