@@ -29,6 +29,7 @@ Route::middleware('throttle:60,1')->group(function () {
     Route::get('/products/{slug}/colors-pdf', [ProductColorsPdfController::class, 'download']);
     Route::get('/products/{slug}/images-zip', [ProductImagesController::class, 'downloadZip']);
     Route::get('/metadatos/banner-video', [MetadatoController::class, 'bannerVideo']);
+    Route::get('/metadatos/site-info', [MetadatoController::class, 'siteInfo']);
 });
 
 // ── Capa 2: Autenticación — límite estricto para evitar fuerza bruta ──────

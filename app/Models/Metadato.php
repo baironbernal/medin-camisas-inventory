@@ -17,4 +17,26 @@ class Metadato extends Model
     {
         static::updateOrCreate(['clave' => $clave], ['valor' => $valor]);
     }
+
+    /**
+     * Información de la empresa (datos + redes sociales) para la factura y
+     * el frontend. Combina los valores por defecto de config/company.php con
+     * lo que esté guardado en la tabla `metadatos`.
+     *
+     * @return array<string, string>
+     */
+    public static function siteInfo(): array
+    {
+        $defaults = config('company', []);
+        $stored = static::whereIn('clave', array_keys($defaults))
+            ->pluck('valor', 'clave');
+
+        $result = [];
+        foreach ($defaults as $clave => $default) {
+            $valor = $stored[$clave] ?? null;
+            $result[$clave] = ($valor === null || $valor === '') ? $default : $valor;
+        }
+
+        return $result;
+    }
 }

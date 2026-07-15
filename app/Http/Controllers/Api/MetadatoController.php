@@ -18,4 +18,13 @@ class MetadatoController extends Controller
 
         return response()->json(['success' => true, 'data' => ['url' => $url]]);
     }
+
+    /**
+     * Información pública de la empresa y redes sociales, usada por el
+     * frontend (pie de página / redes). Combina defaults + metadatos.
+     */
+    public function siteInfo(): JsonResponse
+    {
+        return response()->json(['success' => true, 'data' => Metadato::siteInfo()]);
+    }
 }
