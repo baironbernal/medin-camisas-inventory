@@ -7,238 +7,154 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: Arial, sans-serif;
-            font-size: 11px;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f2f2f2;
+            color: #1a1a2e;
+        }
+
+        /* ── Receipt ─────────────────────────────────────────── */
+        .receipt {
+            width: 360px;
+            margin: 24px auto;
+            padding: 26px 22px 30px;
             background: #fff;
-            color: #000;
+            box-shadow: 0 2px 14px rgba(0, 0, 0, 0.12);
+            color: #1a1a2e;
+            font-size: 12px;
+            line-height: 1.5;
         }
 
-        .page {
-            width: 860px;
-            margin: 0 auto;
-            padding: 18px;
-            background: #fff;
-        }
+        .center { text-align: center; }
+        .bold   { font-weight: bold; }
 
-        /* ── Header ─────────────────────────────────────────── */
-        .header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 6px;
+        /* ── Logo ────────────────────────────────────────────── */
+        .logo-block {
+            text-align: center;
+            margin-bottom: 14px;
         }
-
         .logo-block img {
-            height: 80px;
+            height: 78px;
         }
 
+        /* ── Company info ────────────────────────────────────── */
         .company-info {
-            text-align: right;
-            font-size: 10.5px;
-            line-height: 1.6;
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.55;
         }
-
         .company-info .company-name {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 13px;
+            letter-spacing: 0.4px;
         }
 
-        .company-info .divider {
+        /* ── Dashed divider ──────────────────────────────────── */
+        .divider {
             border: none;
-            border-top: 1px solid #ccc;
-            margin: 4px 0;
+            border-top: 1.5px dashed #9a9aae;
+            margin: 12px 0;
         }
 
-        /* ── Red bar ─────────────────────────────────────────── */
-        .red-bar {
-            height: 4px;
-            background: #8B1A1A;
-            margin-bottom: 0;
-        }
-
-        /* ── Main table wrapper ──────────────────────────────── */
-        .invoice-wrap {
-            border: 1.5px solid #000;
-            border-top: none;
-        }
-
-        /* ── Title row ───────────────────────────────────────── */
-        .title-row {
-            display: flex;
-            border-bottom: 1.5px solid #000;
-        }
-
-        .title-main {
-            flex: 1;
+        /* ── Invoice title block ─────────────────────────────── */
+        .invoice-title {
             text-align: center;
-            padding: 8px 4px;
-            font-size: 18px;
+        }
+        .invoice-title .heading {
+            font-size: 16px;
             font-weight: bold;
-            letter-spacing: 1px;
-            border-right: 1.5px solid #000;
+            letter-spacing: 0.6px;
+            margin-bottom: 4px;
         }
-
-        .title-label {
-            width: 120px;
-            text-align: center;
-            padding: 8px 4px;
-            font-size: 11px;
-            font-weight: bold;
-            border-right: 1.5px solid #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .title-number {
-            width: 130px;
-            text-align: center;
-            padding: 8px 4px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #8B1A1A;
-            background: #fdf8e1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* ── Info rows ───────────────────────────────────────── */
-        .info-row {
-            display: flex;
-            border-bottom: 1.5px solid #000;
-        }
-
-        .info-cell-label {
-            width: 80px;
-            font-weight: bold;
-            padding: 5px 8px;
-            border-right: 1.5px solid #000;
-            background: #f9f9f9;
-        }
-
-        .info-cell-value {
-            flex: 1;
-            padding: 5px 8px;
-            font-weight: bold;
-            border-right: 1.5px solid #000;
-        }
-
-        .info-cell-label-right {
-            width: 80px;
-            font-weight: bold;
-            padding: 5px 8px;
-            border-right: 1.5px solid #000;
-            background: #f9f9f9;
-            text-align: right;
-        }
-
-        .info-cell-value-right {
-            width: 180px;
-            padding: 5px 8px;
-            font-weight: bold;
-            text-align: center;
-            color: #8B1A1A;
-        }
-
-        /* ── Empty spacer row ────────────────────────────────── */
-        .spacer-row {
-            height: 10px;
-            border-bottom: 1.5px solid #000;
+        .invoice-title .meta {
+            font-size: 12px;
+            line-height: 1.6;
         }
 
         /* ── Items table ─────────────────────────────────────── */
         .items-table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 12px;
+        }
+        .items-table thead th {
+            font-weight: bold;
+            padding: 0 0 6px;
+            border-bottom: 1.5px solid #1a1a2e;
+            text-align: left;
+        }
+        .items-table thead th.col-cant   { width: 34px; }
+        .items-table thead th.col-unit,
+        .items-table thead th.col-total   { text-align: right; white-space: nowrap; }
+
+        .items-table tbody td {
+            padding: 8px 0 2px;
+            vertical-align: top;
+        }
+        .items-table tbody td.col-cant  { text-align: left; }
+        .items-table tbody td.col-unit,
+        .items-table tbody td.col-total { text-align: right; white-space: nowrap; }
+        .items-table tbody tr td { padding-top: 9px; }
+        .items-table tbody tr:first-child td { padding-top: 10px; }
+
+        /* ── Totals ──────────────────────────────────────────── */
+        .totals {
+            width: 100%;
+            font-size: 12px;
+        }
+        .totals td {
+            padding: 3px 0;
+        }
+        .totals td.label { text-align: right; padding-right: 14px; }
+        .totals td.value { text-align: right; white-space: nowrap; width: 100px; }
+        .totals tr.grand td {
+            font-weight: bold;
+            font-size: 14px;
+            padding-top: 6px;
         }
 
-        .items-table thead tr th {
-            background: #8B1A1A;
-            color: #fff;
-            padding: 5px 8px;
-            font-weight: bold;
-            font-size: 11px;
-            border-right: 1px solid #6b1111;
+        /* ── Footer ──────────────────────────────────────────── */
+        .footer {
             text-align: center;
         }
-
-        .items-table thead tr th:first-child  { width: 80px; }
-        .items-table thead tr th:nth-child(2) { text-align: left; }
-        .items-table thead tr th:nth-child(3) { width: 130px; }
-        .items-table thead tr th:last-child   { width: 130px; border-right: none; }
-
-        .items-table tbody tr td {
-            border-bottom: 1px solid #ccc;
-            border-right: 1px solid #ccc;
-            padding: 4px 8px;
-            height: 22px;
-            vertical-align: middle;
+        .footer .thanks {
+            font-size: 15px;
+            font-weight: bold;
+            letter-spacing: 0.4px;
         }
-
-        .items-table tbody tr td:first-child  { text-align: center; font-weight: bold; }
-        .items-table tbody tr td:nth-child(3),
-        .items-table tbody tr td:last-child   { text-align: right; }
-        .items-table tbody tr td:last-child   { border-right: none; }
-
-        /* ── Payment / notes row ─────────────────────────────── */
-        .payment-row {
-            border-top: 1.5px solid #000;
-            border-bottom: 1.5px solid #000;
+        .footer .tagline {
+            font-size: 12px;
+            margin-top: 3px;
         }
-
-        .payment-row td {
-            padding: 5px 8px;
+        .social {
+            margin-top: 12px;
+            font-size: 12px;
+            line-height: 1.9;
         }
-
-        /* ── Footer row ──────────────────────────────────────── */
-        .footer-row {
+        .social .row {
             display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-
-        .footer-label {
-            width: 100px;
-            padding: 6px 8px;
-            font-weight: bold;
-            border-right: 1.5px solid #000;
-            background: #f9f9f9;
+        .social .row svg {
+            width: 15px;
+            height: 15px;
+            flex: 0 0 15px;
         }
-
-        .footer-value {
-            flex: 1;
-            padding: 6px 8px;
-            font-weight: bold;
-            border-right: 1.5px solid #000;
-            text-align: center;
-        }
-
-        .footer-total-label {
-            width: 80px;
-            padding: 6px 8px;
-            font-weight: bold;
-            border-right: 1.5px solid #000;
-            text-align: right;
-        }
-
-        .footer-total-value {
-            width: 130px;
-            padding: 6px 8px;
-            font-weight: bold;
-            font-size: 13px;
-            text-align: right;
-            color: #8B1A1A;
+        .website {
+            margin-top: 12px;
+            font-size: 12px;
         }
 
         /* ── Print button ────────────────────────────────────── */
         .print-btn-wrap {
             text-align: center;
-            margin-top: 24px;
+            margin: 20px auto 30px;
         }
-
         .print-btn {
             padding: 10px 32px;
             font-size: 14px;
-            background: #8B1A1A;
+            background: #1a1a2e;
             color: #fff;
             border: none;
             cursor: pointer;
@@ -247,123 +163,117 @@
 
         @media print {
             .print-btn-wrap { display: none; }
-            body { margin: 0; }
-            .page { width: 100%; padding: 8px; }
+            body { background: #fff; margin: 0; }
+            .receipt { box-shadow: none; margin: 0 auto; }
         }
     </style>
 </head>
 <body>
-<div class="page">
 
-    {{-- ── HEADER ───────────────────────────────────────────── --}}
-    <div class="header">
-        <div class="logo-block">
-            <img src="{{ asset('images/logo-dark.png') }}" alt="MEDIN">
-        </div>
-        <div class="company-info">
-            <div class="company-name">Johann Camilo Medina Méndez</div>
-            <div>Nit. 1022425421-3 Régimen simplificado</div>
-            <hr class="divider">
-            <div>CC San Jose Plaza, San Andresito, Local 215 – 216</div>
-            <hr class="divider">
-            <div>✉ camisasmedin@gmail.com &nbsp;&nbsp; 𝕗 @medincamisas</div>
-            <div>📱 321 456 9004 &nbsp;&nbsp; 302 419 7103</div>
+<div class="receipt">
+
+    {{-- ── LOGO ─────────────────────────────────────────────── --}}
+    <div class="logo-block">
+        <img src="{{ asset('images/logo-dark.png') }}" alt="Medin Fashion Feels">
+    </div>
+
+    {{-- ── COMPANY INFO ─────────────────────────────────────── --}}
+    <div class="company-info">
+        <div class="company-name">MEDIN FASHION FEELS</div>
+        <div>NIT: 901544814-0</div>
+        <div>CC Punto Once Local 6017</div>
+        <div>Bogotá, D.C. - Colombia</div>
+        <div>Tel: 310 123 4567</div>
+    </div>
+
+    <hr class="divider">
+
+    {{-- ── INVOICE TITLE ────────────────────────────────────── --}}
+    <div class="invoice-title">
+        <div class="heading">FACTURA DE VENTA</div>
+        <div class="meta">
+            <div>No. {{ $order->order_number }}</div>
+            <div>Fecha: {{ $order->created_at->format('d/m/Y  h:i A') }}</div>
+            <div>Vendedor: {{ str_pad((string) ($preparedBy?->id ?? 1), 2, '0', STR_PAD_LEFT) }}</div>
         </div>
     </div>
 
-    {{-- ── RED BAR ───────────────────────────────────────────── --}}
-    <div class="red-bar"></div>
+    <hr class="divider">
 
-    {{-- ── INVOICE WRAPPER ──────────────────────────────────── --}}
-    <div class="invoice-wrap">
+    {{-- ── ITEMS TABLE ──────────────────────────────────────── --}}
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th class="col-cant">CANT</th>
+                <th class="col-desc">DESCRIPCIÓN</th>
+                <th class="col-unit">V. UNIT</th>
+                <th class="col-total">V. TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($order->items as $item)
+            <tr>
+                <td class="col-cant">{{ $item->quantity }}</td>
+                <td class="col-desc">{{ $item->product_name }}</td>
+                <td class="col-unit">$ {{ number_format((float) $item->discounted_unit_price, 0, ',', '.') }}</td>
+                <td class="col-total">$ {{ number_format((float) $item->discounted_total_price, 0, ',', '.') }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-        {{-- Title row --}}
-        <div class="title-row">
-            <div class="title-main">FACTURA DE VENTA</div>
-            <div class="title-label">No. Factura</div>
-            <div class="title-number">{{ $order->id }}</div>
+    <hr class="divider">
+
+    {{-- ── TOTALS ───────────────────────────────────────────── --}}
+    @php
+        $subtotal = (float) ($order->subtotal_original ?? $order->subtotal ?? 0);
+        $descuento = max(0, $subtotal - (float) ($order->subtotal_discounted ?? $order->subtotal ?? $subtotal));
+    @endphp
+    <table class="totals">
+        <tr>
+            <td class="label">SUBTOTAL</td>
+            <td class="value">$ {{ number_format($subtotal, 0, ',', '.') }}</td>
+        </tr>
+        <tr>
+            <td class="label">DESCUENTO</td>
+            <td class="value">$ {{ number_format($descuento, 0, ',', '.') }}</td>
+        </tr>
+        <tr class="grand">
+            <td class="label">TOTAL</td>
+            <td class="value">$ {{ number_format((float) $order->total, 0, ',', '.') }}</td>
+        </tr>
+    </table>
+
+    <hr class="divider">
+
+    {{-- ── FOOTER ───────────────────────────────────────────── --}}
+    <div class="footer">
+        <div class="thanks">¡GRACIAS POR TU COMPRA!</div>
+        <div class="tagline">Tu estilo, nuestra pasión.</div>
+
+        <div class="social">
+            <div class="row">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16zm0 1.62c-3.15 0-3.52.01-4.76.07-.9.04-1.39.19-1.71.32-.43.17-.74.37-1.06.69-.32.32-.52.63-.69 1.06-.13.32-.28.81-.32 1.71-.06 1.24-.07 1.61-.07 4.76s.01 3.52.07 4.76c.04.9.19 1.39.32 1.71.17.43.37.74.69 1.06.32.32.63.52 1.06.69.32.13.81.28 1.71.32 1.24.06 1.61.07 4.76.07s3.52-.01 4.76-.07c.9-.04 1.39-.19 1.71-.32.43-.17.74-.37 1.06-.69.32-.32.52-.63.69-1.06.13-.32.28-.81.32-1.71.06-1.24.07-1.61.07-4.76s-.01-3.52-.07-4.76c-.04-.9-.19-1.39-.32-1.71a2.85 2.85 0 0 0-.69-1.06 2.85 2.85 0 0 0-1.06-.69c-.32-.13-.81-.28-1.71-.32-1.24-.06-1.61-.07-4.76-.07zm0 2.76a5.3 5.3 0 1 1 0 10.6 5.3 5.3 0 0 1 0-10.6zm0 8.74a3.44 3.44 0 1 0 0-6.88 3.44 3.44 0 0 0 0 6.88zm6.74-8.94a1.24 1.24 0 1 1-2.48 0 1.24 1.24 0 0 1 2.48 0z"/></svg>
+                <span>&#64;medinfashionfeels</span>
+            </div>
+            <div class="row">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/></svg>
+                <span>Medin Fashion Feels</span>
+            </div>
+            <div class="row">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.82a4.28 4.28 0 0 1-1.05-2.82h-3.2v12.86a2.34 2.34 0 0 1-2.33 2.2 2.34 2.34 0 1 1 .66-4.58v-3.26a5.63 5.63 0 0 0-.66-.04 5.6 5.6 0 1 0 5.6 5.6V9.01a7.44 7.44 0 0 0 4.35 1.4V7.2a4.28 4.28 0 0 1-3.37-1.38z"/></svg>
+                <span>&#64;camisasmedin</span>
+            </div>
         </div>
 
-        {{-- Customer name / date --}}
-        <div class="info-row">
-            <div class="info-cell-label">Nombre</div>
-            <div class="info-cell-value">{{ strtoupper($order->customer_name ?? '—') }}</div>
-            <div class="info-cell-label-right">Fecha</div>
-            <div class="info-cell-value-right">{{ $order->created_at->format('d/m/Y') }}</div>
-        </div>
-
-        {{-- Contact / city --}}
-        @php
-            $addr   = $order->shipping_address ?? [];
-            $state  = $addr['state'] ?? '';
-            $city   = trim(($addr['city'] ?? '') . ($state ? ' - ' . strtoupper($state) : ''));
-            $city   = $city ?: '—';
-        @endphp
-        <div class="info-row">
-            <div class="info-cell-label">Contacto</div>
-            <div class="info-cell-value">{{ $order->customer_phone ?? '—' }}</div>
-            <div class="info-cell-label-right">Ciudad</div>
-            <div class="info-cell-value-right" style="color:#000;font-size:11px;">{{ strtoupper($city) }}</div>
-        </div>
-
-        {{-- Spacer --}}
-        <div class="spacer-row"></div>
-
-        {{-- Items table --}}
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th>Cantidad</th>
-                    <th>Descripción</th>
-                    <th>Valor Unidad</th>
-                    <th>Valor total</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($order->items as $item)
-                <tr>
-                    <td>{{ $item->quantity }}</td>
-                    <td>{{ strtoupper($item->product_name) }}</td>
-                    <td>$ &nbsp;{{ number_format((float)$item->discounted_unit_price, 0, ',', '.') }}</td>
-                    <td>$ &nbsp;{{ number_format((float)$item->discounted_total_price, 0, ',', '.') }}</td>
-                </tr>
-                @endforeach
-
-                {{-- Fill empty rows up to 10 minimum lines --}}
-                @for($i = $order->items->count(); $i < 10; $i++)
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>$</td>
-                    <td>-</td>
-                </tr>
-                @endfor
-
-                {{-- Payment / notes row --}}
-                <tr class="payment-row">
-                    <td colspan="2" style="text-align:center;font-style:italic;">
-                        {{ $order->notes ?? '' }}
-                    </td>
-                    <td></td>
-                    <td>$ &nbsp;-</td>
-                </tr>
-            </tbody>
-        </table>
-
-        {{-- Footer --}}
-        <div class="footer-row">
-            <div class="footer-label">Elaborado por</div>
-            <div class="footer-value">{{ strtoupper($preparedBy?->full_name ?? $preparedBy?->name ?? '—') }}</div>
-            <div class="footer-total-label">Total</div>
-            <div class="footer-total-value">$ {{ number_format((float)$order->total, 0, ',', '.') }}</div>
-        </div>
-
-    </div>{{-- /invoice-wrap --}}
-
-    <div class="print-btn-wrap">
-        <button class="print-btn" onclick="window.print()">🖨️ Imprimir</button>
+        <div class="website">www.camisasmedin.com</div>
     </div>
 
 </div>
+
+<div class="print-btn-wrap">
+    <button class="print-btn" onclick="window.print()">🖨️ Imprimir</button>
+</div>
+
 </body>
 </html>

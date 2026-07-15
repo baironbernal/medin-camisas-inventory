@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\MetadatoController;
 use App\Http\Controllers\Api\OrderRulesController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductColorsPdfController;
+use App\Http\Controllers\Api\ProductImagesController;
 use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -26,6 +27,7 @@ Route::middleware('throttle:60,1')->group(function () {
     Route::get('/order-rules', [OrderRulesController::class, 'index']);
     Route::get('/home-ads', [HomeAdController::class, 'index']);
     Route::get('/products/{slug}/colors-pdf', [ProductColorsPdfController::class, 'download']);
+    Route::get('/products/{slug}/images-zip', [ProductImagesController::class, 'downloadZip']);
     Route::get('/metadatos/banner-video', [MetadatoController::class, 'bannerVideo']);
 });
 
