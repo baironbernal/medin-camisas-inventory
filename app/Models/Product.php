@@ -99,6 +99,11 @@ class Product extends Model implements HasMedia
         return $this->hasMany(PriceRule::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

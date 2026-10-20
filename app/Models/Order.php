@@ -32,6 +32,7 @@ class Order extends Model
         'customer_phone',
         'shipping_address',
         'notes',
+        'meta_tracking',
     ];
 
     protected $casts = [
@@ -42,9 +43,13 @@ class Order extends Model
         'shipping_cost' => 'decimal:2',
         'total' => 'decimal:2',
         'shipping_address' => 'array',
+        'meta_tracking' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /** Max units a customer can buy without an account (guest checkout). */
+    public const GUEST_MAX_UNITS = 6;
 
     public const STATUS_PENDING = 'pending';
     public const STATUS_CONFIRMED = 'confirmed';

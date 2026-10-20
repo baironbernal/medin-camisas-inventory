@@ -50,8 +50,48 @@ class CartController extends Controller
             'items'                      => 'required|array|min:1',
             'items.*.product_variant_id' => 'required|exists:product_variants,id',
             'items.*.quantity'           => 'required|integer|min:1',
+            'meta.fbp'                   => 'nullable|string|max:255',
+            'meta.fbc'                   => 'nullable|string|max:255',
         ]);
 
+        return $this->createPaidOrder($request, Auth::id());
+    }
+
+    // ── POST /api/guest-checkout ──────────────────────────────────────────────
+    // Public — no auth. Only small orders (up to GUEST_MAX_UNITS) can be paid
+    // without an account; bigger orders must go through /checkout.
+    public function guestCheckout(Request $request): JsonResponse
+    {
+        $request->validate([
+            'customer_email'             => 'required|email|max:255',
+            'customer_name'              => 'required|string|max:255',
+            'customer_phone'             => 'required|string|max:50',
+            'notes'                      => 'nullable|string|max:1000',
+            'items'                      => 'required|array|min:1',
+            'items.*.product_variant_id' => 'required|exists:product_variants,id',
+            'items.*.quantity'           => 'required|integer|min:1',
+            'meta.fbp'                   => 'nullable|string|max:255',
+            'meta.fbc'                   => 'nullable|string|max:255',
+        ]);
+
+        $totalUnits = collect($request->items)->sum('quantity');
+
+        if ($totalUnits > Order::GUEST_MAX_UNITS) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Para pedidos de más de ' . Order::GUEST_MAX_UNITS . ' unidades debes iniciar sesión.',
+            ], 422);
+        }
+
+        return $this->createPaidOrder($request, null);
+    }
+
+    /**
+     * Create the order and return the Wompi widget config.
+     * Shared by the authenticated and guest checkout flows.
+     */
+    protected function createPaidOrder(Request $request, ?int $userId): JsonResponse
+    {
         try {
             $customerData = [
                 'customer_email' => $request->customer_email,
@@ -63,8 +103,19 @@ class CartController extends Controller
             $orderWithItems = $this->orderService->createOrderFromItems(
                 $request->items,
                 $customerData,
-                Auth::id()
+                $userId
             );
+
+            // Browser data for the Meta Conversions API Purchase (sent from the Wompi webhook)
+            $orderWithItems->update([
+                'meta_tracking' => array_filter([
+                    'fbp'        => $request->input('meta.fbp'),
+                    'fbc'        => $request->input('meta.fbc'),
+                    'ip'         => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'source_url' => $request->headers->get('origin'),
+                ]),
+            ]);
 
             $amountInCents = (int) round($orderWithItems->total * 100);
 
@@ -106,7 +157,7 @@ class CartController extends Controller
         } catch (\Exception $e) {
             // Unexpected technical error — log full details, hide internals from user
             Log::error('Checkout failed unexpectedly', [
-                'user_id' => Auth::id(),
+                'user_id' => $userId,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString(),
             ]);

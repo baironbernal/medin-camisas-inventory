@@ -34,6 +34,13 @@ return [
         'events_key'    => env('WOMPI_EVENTS_KEY'),
     ],
 
+    'meta' => [
+        'pixel_id'        => env('META_PIXEL_ID'),
+        'access_token'    => env('META_ACCESS_TOKEN'),
+        // Only while testing in Events Manager → "Test events". Leave empty in production.
+        'test_event_code' => env('META_TEST_EVENT_CODE'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -6,51 +6,38 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
-use ZipArchive;
 
 class ProductImagesController extends Controller
 {
     /**
-     * Download every image of a product bundled in a single ZIP file.
-     * Reuses the same image-gathering logic as the colors PDF.
+     * Download a single product image as an attachment.
+     * Only paths that belong to one of the product's variants are allowed,
+     * so arbitrary files in storage can't be requested.
      */
-    public function downloadZip(string $slug)
+    public function download(Request $request, string $slug)
     {
+        $request->validate(['path' => ['required', 'string']]);
+
         $product = Product::where('slug', $slug)
             ->where('is_active', true)
             ->firstOrFail();
 
-        $imagePaths = ProductVariant::where('product_id', $product->id)
+        $path = $request->query('path');
+
+        $belongsToProduct = ProductVariant::where('product_id', $product->id)
             ->whereNotNull('images')
             ->pluck('images')
             ->flatten()
-            ->filter()
-            ->unique()
-            ->map(fn ($path) => public_path('storage/' . $path))
-            ->filter(fn ($fullPath) => file_exists($fullPath))
-            ->values()
-            ->toArray();
+            ->contains($path);
 
-        if (empty($imagePaths)) {
-            return response()->json(['message' => 'Este producto no tiene imágenes.'], 404);
+        $fullPath = public_path('storage/' . $path);
+
+        if (! $belongsToProduct || ! file_exists($fullPath)) {
+            return response()->json(['message' => 'Imagen no encontrada.'], 404);
         }
 
-        $zipName = 'imagenes-' . $product->slug . '.zip';
-        $zipPath = storage_path('app/' . $zipName);
+        $extension = pathinfo($fullPath, PATHINFO_EXTENSION) ?: 'jpg';
 
-        $zip = new ZipArchive();
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-            return response()->json(['message' => 'No se pudo generar el archivo.'], 500);
-        }
-
-        foreach ($imagePaths as $index => $fullPath) {
-            $extension = pathinfo($fullPath, PATHINFO_EXTENSION) ?: 'jpg';
-            $entryName = $product->slug . '-' . ($index + 1) . '.' . $extension;
-            $zip->addFile($fullPath, $entryName);
-        }
-
-        $zip->close();
-
-        return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
+        return response()->download($fullPath, $product->slug . '.' . $extension);
     }
 }

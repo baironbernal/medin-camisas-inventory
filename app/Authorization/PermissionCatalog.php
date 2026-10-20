@@ -107,6 +107,12 @@ class PermissionCatalog
                 ],
             ],
 
+            'product_reviews' => [
+                'label'   => 'Reseñas de Productos',
+                'gender'  => 'f',
+                'actions' => ['view_any', 'view', 'update', 'delete'],
+            ],
+
             'categories' => [
                 'label'   => 'Categorías',
                 'gender'  => 'f',

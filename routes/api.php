@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\OrderRulesController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductColorsPdfController;
 use App\Http\Controllers\Api\ProductImagesController;
+use App\Http\Controllers\Api\ProductReviewController;
 use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -27,7 +28,8 @@ Route::middleware('throttle:60,1')->group(function () {
     Route::get('/order-rules', [OrderRulesController::class, 'index']);
     Route::get('/home-ads', [HomeAdController::class, 'index']);
     Route::get('/products/{slug}/colors-pdf', [ProductColorsPdfController::class, 'download']);
-    Route::get('/products/{slug}/images-zip', [ProductImagesController::class, 'downloadZip']);
+    Route::get('/products/{slug}/images/download', [ProductImagesController::class, 'download']);
+    Route::get('/products/{slug}/reviews', [ProductReviewController::class, 'index']);
     Route::get('/metadatos/banner-video', [MetadatoController::class, 'bannerVideo']);
     Route::get('/metadatos/site-info', [MetadatoController::class, 'siteInfo']);
 });
@@ -67,6 +69,17 @@ Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
 Route::middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
     Route::get('/orders', [CartController::class, 'orders']);
     Route::get('/orders/{order}', [CartController::class, 'showOrder']);
+});
+
+// Checkout sin cuenta: solo pedidos pequeños (validado en el controlador)
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/guest-checkout', [CartController::class, 'guestCheckout']);
+});
+
+// ── Capa 4b: Reseñas de productos ─────────────────────────────────────────
+// Público, sin auth. Límite estricto para frenar spam.
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/products/{slug}/reviews', [ProductReviewController::class, 'store']);
 });
 
 // ── Capa 5: WhatsApp orders ────────────────────────────────────────────────

@@ -42,6 +42,7 @@ class RolePresets
                 self::module('stores', ['view_any', 'view', 'view_all']),
                 self::module('products', ['view_any', 'view', 'create', 'update', 'view_prices', 'view_stock', 'manage_attributes', 'export']),
                 self::module('categories', PermissionCatalog::CRUD),
+                self::module('product_reviews', ['view_any', 'view', 'update', 'delete']),
                 self::module('inventory', ['view_any', 'view', 'create', 'update', 'adjust', 'entries', 'exits', 'transfer', 'view_all']),
                 self::module('movements', ['view_any', 'view', 'create', 'update', 'approve_transfer', 'view_all']),
                 self::module('seasons', PermissionCatalog::CRUD),

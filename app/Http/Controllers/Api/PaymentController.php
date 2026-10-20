@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\MetaConversionsService;
 use App\Services\WompiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -79,6 +80,13 @@ class PaymentController extends Controller
             ]);
 
             return response()->json(['message' => 'Internal error'], 500);
+        }
+
+        // Report the confirmed sale to Meta after Wompi gets its response,
+        // so a slow Meta API never delays or fails the webhook.
+        if ($status === 'APPROVED') {
+            dispatch(fn () => app(MetaConversionsService::class)->sendPurchase($order->fresh()))
+                ->afterResponse();
         }
 
         return response()->json(['message' => 'OK'], 200);

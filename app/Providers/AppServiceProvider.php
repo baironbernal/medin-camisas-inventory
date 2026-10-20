@@ -10,6 +10,7 @@ use App\Models\Inventory;
 use App\Models\Movement;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductReview;
 use App\Models\Season;
 use App\Models\Store;
 use App\Models\User;
@@ -23,6 +24,7 @@ use App\Policies\InventoryPolicy;
 use App\Policies\MovementPolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\ProductPolicy;
+use App\Policies\ProductReviewPolicy;
 use App\Policies\SeasonPolicy;
 use App\Policies\StorePolicy;
 use App\Policies\UserPolicy;
@@ -48,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
         Discount::class     => DiscountPolicy::class,
         DiscountRule::class => DiscountRulePolicy::class,
         HomeAd::class       => HomeAdPolicy::class,
+        ProductReview::class => ProductReviewPolicy::class,
         User::class         => UserPolicy::class,
     ];
 
