@@ -52,6 +52,7 @@ class ProductsStep
                             $set('discounted_unit_price', null);
                             $set('item_total', null);
                             $set('discount_rule_id', null);
+                            $set('unit_sale_only', false);
 
                             return;
                         }
@@ -61,12 +62,15 @@ class ProductsStep
                         if ($variant) {
                             $price = round($variant->calculatePrice(), 2);
                             $stock = (int) $variant->total_stock;
+                            $unitSaleOnly = (bool) $variant->product->unit_sale_only;
                             $set('unit_price', $price);
                             $set('available_stock', $stock);
+                            $set('unit_sale_only', $unitSaleOnly);
                             DiscountCalculatorService::applyToFormState(
                                 max(1, (int) ($get('quantity') ?? 1)),
                                 $price,
-                                $set
+                                $set,
+                                $unitSaleOnly
                             );
                         }
                     })
@@ -93,7 +97,7 @@ class ProductsStep
                         $unitPrice = (float) ($get('unit_price') ?? 0);
 
                         if ($unitPrice > 0) {
-                            DiscountCalculatorService::applyToFormState($quantity, $unitPrice, $set);
+                            DiscountCalculatorService::applyToFormState($quantity, $unitPrice, $set, (bool) $get('unit_sale_only'));
                         }
                     }),
 
@@ -127,6 +131,7 @@ class ProductsStep
 
                 Hidden::make('discount_rule_id')->dehydrated(),
                 Hidden::make('available_stock')->default(0),
+                Hidden::make('unit_sale_only')->default(false),
             ])
             ->columns(4)
             ->addActionLabel('+ Agregar Producto')
@@ -256,7 +261,11 @@ class ProductsStep
         $fmt = fn (float $v): string => '$' . number_format($v, 0, ',', '.') . ' COP';
 
         // ── Volume discount (cart total units) ────────────────────────────────
-        $totalQty = array_sum(array_map(fn ($i) => max(0, (int) ($i['quantity'] ?? 0)), $items));
+        // Unit-sale-only products don't count toward the tier and get no discount
+        $totalQty = array_sum(array_map(
+            fn ($i) => empty($i['unit_sale_only']) ? max(0, (int) ($i['quantity'] ?? 0)) : 0,
+            $items
+        ));
         [, $discountPct] = DiscountCalculatorService::calculate($totalQty, 1.0);
 
         // ── Large-size protection rule ─────────────────────────────────────────
@@ -277,7 +286,9 @@ class ProductsStep
                 $unitPrice += $largeSizeSurcharge;
             }
 
-            $discountedUnitPrice = $unitPrice * (1 - $discountPct / 100);
+            $discountedUnitPrice = empty($item['unit_sale_only'])
+                ? $unitPrice * (1 - $discountPct / 100)
+                : $unitPrice;
             $originalTotal      += $unitPrice * $qty;
             $discountedTotal    += $discountedUnitPrice * $qty;
         }

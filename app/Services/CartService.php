@@ -38,9 +38,8 @@ class CartService implements CartPricingEngineInterface
         $largeVariantIds    = $largeSizeAnalysis['large_variant_ids'];
 
         // ── 3. Total quantity drives volume-discount tier ──────────────────────
-        $totalQuantity = array_sum(
-            array_map(fn ($i) => max(1, (int) ($i['quantity'] ?? 1)), $items)
-        );
+        // Unit-sale-only products neither get a discount nor count toward the tier
+        $totalQuantity = DiscountCalculatorService::discountableQuantity($items, $variants);
 
         // ── 4. Build per-item calculated data ─────────────────────────────────
         $calculatedItems    = [];
@@ -65,10 +64,9 @@ class CartService implements CartPricingEngineInterface
                 $unitPrice += $largeSizeSurcharge;
             }
 
-            [$discountedUnitPrice, $discountPct, $ruleId] = DiscountCalculatorService::calculate(
-                $totalQuantity,
-                $unitPrice
-            );
+            [$discountedUnitPrice, $discountPct, $ruleId] = $this->isUnitSaleOnly($variant)
+                ? [$unitPrice, 0.0, null]
+                : DiscountCalculatorService::calculate($totalQuantity, $unitPrice);
 
             $totalPrice          = round($unitPrice * $quantity, 2);
             $discountedTotalPrice = round($discountedUnitPrice * $quantity, 2);
@@ -85,6 +83,7 @@ class CartService implements CartPricingEngineInterface
                 'discounted_total_price' => $discountedTotalPrice,
                 'discount_percentage'    => $discountPct,
                 'discount_rule_id'       => $ruleId,
+                'unit_sale_only'         => $this->isUnitSaleOnly($variant),
                 'has_large_size_surcharge' => $hasLargeSizeSurcharge,
                 'surcharge_amount'       => $hasLargeSizeSurcharge ? $largeSizeSurcharge : 0,
             ];
@@ -103,6 +102,11 @@ class CartService implements CartPricingEngineInterface
                 'total_units'      => $largeSizeAnalysis['total_units'],
             ],
         ];
+    }
+
+    private function isUnitSaleOnly(?ProductVariant $variant): bool
+    {
+        return (bool) $variant?->product?->unit_sale_only;
     }
 
     private function emptyResult(): array

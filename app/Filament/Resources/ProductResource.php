@@ -73,6 +73,11 @@ class ProductResource extends Resource
                             ->numeric()
                             ->nullable()
                             ->prefix('$'),
+                        Forms\Components\Toggle::make('unit_sale_only')
+                            ->label('Solo venta unitaria')
+                            ->helperText('Si está activo, a este producto no se le aplican los descuentos por volumen del carrito.')
+                            ->default(false)
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('brand')
                             ->label('Marca')
                             ->maxLength(255),
@@ -157,6 +162,10 @@ class ProductResource extends Resource
                     ->money('COP')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\IconColumn::make('unit_sale_only')
+                    ->label('Solo unitaria')
+                    ->boolean()
+                    ->toggleable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Activo')
                     ->boolean(),
@@ -168,6 +177,8 @@ class ProductResource extends Resource
                     ->relationship('category', 'name'),
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Estado'),
+                Tables\Filters\TernaryFilter::make('unit_sale_only')
+                    ->label('Solo venta unitaria'),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

@@ -101,8 +101,13 @@ class OrderCreationService
     private function createOrderItems(Order $order, array $items): void
     {
         // ── 1. Cart-level volume discount (based on total units) ──────────────
-        $totalQuantity = array_sum(array_map(fn ($i) => max(1, (int) ($i['quantity'] ?? 1)), $items));
-        [, $cartDiscountPct, $cartRuleId] = DiscountCalculatorService::calculate($totalQuantity, 1.0);
+        // Unit-sale-only products don't count toward the tier and get no discount
+        $variants = ProductVariant::with('product')
+            ->whereIn('id', array_filter(array_column($items, 'product_variant_id')))
+            ->get()
+            ->keyBy('id');
+
+        $totalQuantity = DiscountCalculatorService::discountableQuantity($items, $variants);
 
         // ── 2. Large-size protection rule ─────────────────────────────────────
         $largeSizeAnalysis = LargeSizeProtectionService::analyze($items);
@@ -117,7 +122,7 @@ class OrderCreationService
                 continue;
             }
 
-            $variant = ProductVariant::with('product')->find($variantId);
+            $variant = $variants->get($variantId);
 
             if (! $variant) {
                 continue;
@@ -132,7 +137,9 @@ class OrderCreationService
             }
 
             // Apply cart-level volume discount on the (possibly surcharge-adjusted) price
-            [$discountedUnitPrice, $discountPct, $ruleId] = DiscountCalculatorService::calculate($totalQuantity, $unitPrice);
+            [$discountedUnitPrice, $discountPct, $ruleId] = $variant->product->unit_sale_only
+                ? [$unitPrice, 0.0, null]
+                : DiscountCalculatorService::calculate($totalQuantity, $unitPrice);
 
             OrderItem::create([
                 'order_id'              => $order->id,

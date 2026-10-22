@@ -25,6 +25,7 @@ class Product extends Model implements HasMedia
         'category_id',
         'base_price',
         'wholesaler_price',
+        'unit_sale_only',
         'brand',
         'supplier',
         'is_active',
@@ -36,6 +37,7 @@ class Product extends Model implements HasMedia
     protected $casts = [
         'base_price' => 'decimal:2',
         'wholesaler_price' => 'decimal:2',
+        'unit_sale_only' => 'boolean',
         'is_active' => 'boolean',
         'images' => 'json',
         'tags' => 'array',

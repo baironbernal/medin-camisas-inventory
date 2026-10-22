@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\DiscountRule;
 use Filament\Forms\Set;
+use Illuminate\Support\Collection;
 
 class DiscountCalculatorService
 {
@@ -11,9 +12,9 @@ class DiscountCalculatorService
      * Find the applicable discount rule for a given quantity and apply it
      * to Filament form state (for use inside Repeater item callbacks).
      */
-    public static function applyToFormState(int $quantity, float $unitPrice, Set $set): void
+    public static function applyToFormState(int $quantity, float $unitPrice, Set $set, bool $unitSaleOnly = false): void
     {
-        $rule = self::findRule($quantity);
+        $rule = $unitSaleOnly ? null : self::findRule($quantity);
 
         if ($rule && $unitPrice > 0) {
             $discountedPrice = self::calcDiscountedPrice($rule, $unitPrice);
@@ -47,6 +48,20 @@ class DiscountCalculatorService
         $discountPct = round((($unitPrice - $discountedPrice) / $unitPrice) * 100, 2);
 
         return [round($discountedPrice, 2), $discountPct, $rule->id];
+    }
+
+    /**
+     * Units that count toward the volume-discount tier: unit-sale-only
+     * products are excluded. $variants must be keyed by id with `product` loaded.
+     */
+    public static function discountableQuantity(array $items, Collection $variants): int
+    {
+        return array_sum(array_map(
+            fn ($i) => $variants->get($i['product_variant_id'] ?? null)?->product?->unit_sale_only
+                ? 0
+                : max(1, (int) ($i['quantity'] ?? 1)),
+            $items
+        ));
     }
 
     private static function findRule(int $quantity): ?DiscountRule

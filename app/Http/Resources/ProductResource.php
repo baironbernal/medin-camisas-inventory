@@ -23,6 +23,7 @@ class ProductResource extends JsonResource
             'slug' => $this->slug,
             'description'=> $this->description,
             'wholesaler_price' => $this->wholesaler_price,
+            'unit_sale_only' => (bool) $this->unit_sale_only,
             'variants' => VariantResource::collection($variants),
             'available_attributes' => $this->buildAvailableAttributes($variants),
             'combination_index' => $this->buildCombinationIndex($variants),
