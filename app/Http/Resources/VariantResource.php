@@ -19,6 +19,7 @@ class VariantResource extends JsonResource
 
         return [
             'id'          => $this->id,
+            'product_id'  => $this->product_id,
             'sku'         => $this->sku,
             'price'       => $this->price,
             'images'      => $this->images,

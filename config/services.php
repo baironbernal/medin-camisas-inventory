@@ -39,6 +39,10 @@ return [
         'access_token'    => env('META_ACCESS_TOKEN'),
         // Only while testing in Events Manager → "Test events". Leave empty in production.
         'test_event_code' => env('META_TEST_EVENT_CODE'),
+        // Catalog API: the token needs the catalog_management permission
+        'catalog_id'      => env('META_CATALOG_ID'),
+        'catalog_token'   => env('META_CATALOG_TOKEN'),
+        'store_url'       => env('META_STORE_URL', 'https://www.camisasmedin.com'),
     ],
 
     'slack' => [

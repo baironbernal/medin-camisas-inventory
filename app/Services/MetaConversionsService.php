@@ -59,6 +59,7 @@ class MetaConversionsService
                 'content_type' => 'product',
                 // Product IDs, matching the browser Pixel events (ViewContent, AddToCart...)
                 'content_ids'  => $this->contents($order)->pluck('id')->all(),
+                'content_name' => $order->items->pluck('product_name')->filter()->unique()->implode(', '),
                 'contents'     => $this->contents($order)->all(),
                 'num_items'    => $order->items->sum('quantity'),
                 'order_id'     => $order->order_number,
@@ -73,7 +74,11 @@ class MetaConversionsService
     {
         return $order->items
             ->groupBy(fn ($item) => (string) ($item->productVariant?->product_id ?? $item->variant_sku))
-            ->map(fn ($items, $id) => ['id' => (string) $id, 'quantity' => $items->sum('quantity')])
+            ->map(fn ($items, $id) => [
+                'id'         => (string) $id,
+                'quantity'   => $items->sum('quantity'),
+                'item_price' => (float) $items->first()->discounted_unit_price,
+            ])
             ->values();
     }
 
