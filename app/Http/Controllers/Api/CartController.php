@@ -6,6 +6,7 @@ use App\Exceptions\BusinessException;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\CartService;
+use App\Services\MetaConversionsService;
 use App\Services\OrderService;
 use App\Services\WompiService;
 use Illuminate\Http\JsonResponse;
@@ -106,16 +107,12 @@ class CartController extends Controller
                 $userId
             );
 
-            // Browser data for the Meta Conversions API Purchase (sent from the Wompi webhook)
             $orderWithItems->update([
-                'meta_tracking' => array_filter([
-                    'fbp'        => $request->input('meta.fbp'),
-                    'fbc'        => $request->input('meta.fbc'),
-                    'ip'         => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                    'source_url' => $request->headers->get('origin'),
-                ]),
+                'source'         => Order::SOURCE_WEB,
+                'payment_method' => Order::PAYMENT_WOMPI,
+                'meta_tracking'  => $this->metaTracking($request),
             ]);
+            $this->reportOrderPlaced($orderWithItems);
 
             $amountInCents = (int) round($orderWithItems->total * 100);
 
@@ -175,6 +172,8 @@ class CartController extends Controller
             'items'                      => 'required|array|min:1',
             'items.*.product_variant_id' => 'required|exists:product_variants,id',
             'items.*.quantity'           => 'required|integer|min:1',
+            'meta.fbp'                   => 'nullable|string|max:255',
+            'meta.fbc'                   => 'nullable|string|max:255',
         ]);
 
         try {
@@ -190,6 +189,14 @@ class CartController extends Controller
                 $customerData,
                 Auth::id()
             );
+
+            // Payment method (transferencia / contraentrega...) is agreed over WhatsApp
+            // and set by the admin when confirming the order.
+            $orderWithItems->update([
+                'source'        => Order::SOURCE_WHATSAPP,
+                'meta_tracking' => $this->metaTracking($request),
+            ]);
+            $this->reportOrderPlaced($orderWithItems);
 
             return response()->json([
                 'success' => true,
@@ -227,6 +234,31 @@ class CartController extends Controller
             ]);
             return response()->json(['success' => false, 'message' => 'Error al crear el pedido. Intenta de nuevo.'], 500);
         }
+    }
+
+    /**
+     * Browser data so server-side Meta events (OrderPlaced now, Purchase when
+     * the order is paid — maybe days later from the admin panel) can be
+     * matched to the visitor.
+     */
+    protected function metaTracking(Request $request): array
+    {
+        return array_filter([
+            'fbp'        => $request->input('meta.fbp'),
+            'fbc'        => $request->input('meta.fbc'),
+            'ip'         => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'source_url' => $request->headers->get('origin'),
+        ]);
+    }
+
+    /** Meta "OrderPlaced": order generated, not paid yet. Sent after the response. */
+    protected function reportOrderPlaced(Order $order): void
+    {
+        $orderId = $order->id;
+
+        dispatch(fn () => app(MetaConversionsService::class)->sendOrderPlaced(Order::find($orderId)))
+            ->afterResponse();
     }
 
     // ── GET /api/orders ───────────────────────────────────────────────────────

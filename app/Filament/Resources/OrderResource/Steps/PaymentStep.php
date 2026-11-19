@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\OrderResource\Steps;
 
+use App\Models\Order;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Wizard\Step;
@@ -31,13 +33,19 @@ class PaymentStep
             ->description('Suba la imagen o PDF del comprobante de pago verificado')
             ->icon('heroicon-o-document-arrow-up')
             ->schema([
+                Select::make('payment_method')
+                    ->label('Método de pago')
+                    ->options(Order::MANUAL_PAYMENT_METHODS)
+                    ->default(Order::PAYMENT_TRANSFER)
+                    ->required()
+                    ->live(),
                 FileUpload::make('payment_proof_path')
                     ->label('Comprobante de Pago')
                     ->disk('public')
                     ->directory('payment-proofs')
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
                     ->maxSize(5120)
-                    ->required()
+                    ->required(fn (Get $get): bool => $get('payment_method') !== Order::PAYMENT_CASH_ON_DELIVERY)
                     ->image()
                     ->imagePreviewHeight('200'),
             ]);

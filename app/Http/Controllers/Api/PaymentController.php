@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Services\MetaConversionsService;
 use App\Services\WompiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -61,6 +60,7 @@ class PaymentController extends Controller
                     // Updating to STATUS_CONFIRMED triggers OrderObserver → inventory deduction
                     $order->update([
                         'status'               => Order::STATUS_CONFIRMED,
+                        'payment_method'       => Order::PAYMENT_WOMPI,
                         'wompi_transaction_id' => $transactionId,
                     ]);
 
@@ -82,12 +82,8 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Internal error'], 500);
         }
 
-        // Report the confirmed sale to Meta after Wompi gets its response,
-        // so a slow Meta API never delays or fails the webhook.
-        if ($status === 'APPROVED') {
-            dispatch(fn () => app(MetaConversionsService::class)->sendPurchase($order->fresh()))
-                ->afterResponse();
-        }
+        // The Meta Purchase is reported by OrderObserver when the order gets paid_at,
+        // the same path used for transfer / cash on delivery orders.
 
         return response()->json(['message' => 'OK'], 200);
     }

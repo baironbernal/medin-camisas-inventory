@@ -20,6 +20,9 @@ class Order extends Model
         'wompi_transaction_id',
         'payment_proof_path',
         'status',
+        'source',
+        'payment_method',
+        'paid_at',
         'subtotal',
         'subtotal_original',
         'subtotal_discounted',
@@ -33,6 +36,7 @@ class Order extends Model
         'shipping_address',
         'notes',
         'meta_tracking',
+        'meta_purchase_sent_at',
     ];
 
     protected $casts = [
@@ -44,6 +48,8 @@ class Order extends Model
         'total' => 'decimal:2',
         'shipping_address' => 'array',
         'meta_tracking' => 'array',
+        'paid_at' => 'datetime',
+        'meta_purchase_sent_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -64,6 +70,60 @@ class Order extends Model
         self::STATUS_COMPLETED,
         self::STATUS_CANCELLED,
     ];
+
+    public const SOURCE_WEB = 'web';           // checkout on the site, paid with Wompi
+    public const SOURCE_WHATSAPP = 'whatsapp'; // created on the site, closed over WhatsApp
+    public const SOURCE_ADMIN = 'admin';       // created from the admin panel wizard
+
+    public const SOURCES = [
+        self::SOURCE_WEB      => 'Web (Wompi)',
+        self::SOURCE_WHATSAPP => 'Web → WhatsApp',
+        self::SOURCE_ADMIN    => 'Panel admin',
+    ];
+
+    public const PAYMENT_WOMPI = 'wompi';
+    public const PAYMENT_TRANSFER = 'transferencia';
+    public const PAYMENT_CASH_ON_DELIVERY = 'contraentrega';
+    public const PAYMENT_CASH = 'efectivo';
+
+    public const PAYMENT_METHODS = [
+        self::PAYMENT_WOMPI            => 'Wompi (en línea)',
+        self::PAYMENT_TRANSFER         => 'Transferencia',
+        self::PAYMENT_CASH_ON_DELIVERY => 'Contraentrega',
+        self::PAYMENT_CASH             => 'Efectivo',
+    ];
+
+    /** Payment methods an admin can pick (Wompi is set automatically by the checkout). */
+    public const MANUAL_PAYMENT_METHODS = [
+        self::PAYMENT_TRANSFER         => 'Transferencia',
+        self::PAYMENT_CASH_ON_DELIVERY => 'Contraentrega',
+        self::PAYMENT_CASH             => 'Efectivo',
+    ];
+
+    public function isPaid(): bool
+    {
+        return $this->paid_at !== null;
+    }
+
+    /**
+     * Whether the current status means the money was received.
+     * Cash on delivery is only collected when the order is delivered (completed);
+     * every other method is paid by the time the order is confirmed.
+     */
+    public function statusImpliesPaid(): bool
+    {
+        if ($this->payment_method === self::PAYMENT_CASH_ON_DELIVERY) {
+            return $this->status === self::STATUS_COMPLETED;
+        }
+
+        return in_array($this->status, [self::STATUS_CONFIRMED, self::STATUS_PROCESSING, self::STATUS_COMPLETED]);
+    }
+
+    /** Orders created on the website (Wompi or WhatsApp) are the ones reported to Meta. */
+    public function isFromWebsite(): bool
+    {
+        return $this->source !== self::SOURCE_ADMIN;
+    }
 
     public function user(): BelongsTo
     {

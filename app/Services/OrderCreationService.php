@@ -79,6 +79,8 @@ class OrderCreationService
         return Order::create([
             'order_number' => Order::generateOrderNumber(),
             'status' => Order::STATUS_PENDING,
+            'source' => Order::SOURCE_ADMIN,
+            'payment_method' => $data['payment_method'] ?? null,
             'user_id' => $user?->id,
             'customer_name' => $isExisting
                 ? ($data['customer_name'] ?? $user?->name)

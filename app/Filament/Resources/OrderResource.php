@@ -43,6 +43,14 @@ class OrderResource extends Resource
                                 'cancelled' => 'Cancelado',
                             ])
                             ->required(),
+                        Forms\Components\Select::make('payment_method')
+                            ->label('Método de pago')
+                            ->options(Order::PAYMENT_METHODS)
+                            ->placeholder('Por definir')
+                            ->helperText('Al pasar a Confirmado (o Completado si es contraentrega) se registra el pago y se reporta la compra a Meta.'),
+                        Forms\Components\Placeholder::make('paid_at_display')
+                            ->label('Pagado')
+                            ->content(fn (?Order $record): string => $record?->paid_at?->format('d/m/Y H:i') ?? 'No pagado'),
                         Forms\Components\TextInput::make('customer_name')
                             ->label('Nombre del Cliente')
                             ->disabled(),
@@ -137,6 +145,17 @@ class OrderResource extends Resource
                         'cancelled' => 'Cancelado',
                         default => $state,
                     }),
+                Tables\Columns\TextColumn::make('payment_method')
+                    ->label('Pago')
+                    ->badge()
+                    ->placeholder('Por definir')
+                    ->formatStateUsing(fn (?string $state): string => Order::PAYMENT_METHODS[$state] ?? (string) $state)
+                    ->color(fn (Order $record): string => $record->isPaid() ? 'success' : 'warning')
+                    ->tooltip(fn (Order $record): string => $record->isPaid() ? 'Pagado' : 'Sin pagar'),
+                Tables\Columns\TextColumn::make('source')
+                    ->label('Origen')
+                    ->formatStateUsing(fn (?string $state): string => Order::SOURCES[$state] ?? (string) $state)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('user.full_name')
                     ->label('Mayorista')
                     ->placeholder('Sin asignar')
@@ -158,6 +177,17 @@ class OrderResource extends Resource
                         'completed' => 'Completado',
                         'cancelled' => 'Cancelado',
                     ]),
+                Tables\Filters\SelectFilter::make('payment_method')
+                    ->label('Método de pago')
+                    ->options(Order::PAYMENT_METHODS),
+                Tables\Filters\SelectFilter::make('source')
+                    ->label('Origen')
+                    ->options(Order::SOURCES),
+                Tables\Filters\TernaryFilter::make('paid_at')
+                    ->label('Pagado')
+                    ->nullable()
+                    ->trueLabel('Pagados')
+                    ->falseLabel('Sin pagar'),
                 Tables\Filters\Filter::make('created_at')
                     ->label('Fecha')
                     ->form([
@@ -218,13 +248,32 @@ class OrderResource extends Resource
                     ->label('Confirmar')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
-                    ->requiresConfirmation()
-                    ->modalDescription('El inventario se descontará automáticamente al confirmar.')
+                    ->modalHeading('Confirmar pedido')
+                    ->modalDescription('El inventario se descontará automáticamente. Transferencia/efectivo se registran como pagados (compra en Meta); contraentrega queda pendiente de cobro.')
                     ->visible(fn (Order $record): bool => $record->status === Order::STATUS_PENDING
                         && auth()->user()->can('changeStatus', $record))
-                    ->action(function (Order $record): void {
-                        $record->update(['status' => Order::STATUS_CONFIRMED]);
-                        Notification::make()->title('Pedido confirmado — inventario descontado')->success()->send();
+                    ->mountUsing(fn (Forms\Form $form, Order $record) => $form->fill([
+                        'payment_method' => $record->payment_method ?? Order::PAYMENT_TRANSFER,
+                    ]))
+                    ->form([
+                        Forms\Components\Select::make('payment_method')
+                            ->label('Método de pago')
+                            ->options(fn (Order $record) => $record->payment_method === Order::PAYMENT_WOMPI
+                                ? Order::PAYMENT_METHODS
+                                : Order::MANUAL_PAYMENT_METHODS)
+                            ->required(),
+                    ])
+                    ->action(function (Order $record, array $data): void {
+                        $record->update([
+                            'status'         => Order::STATUS_CONFIRMED,
+                            'payment_method' => $data['payment_method'],
+                        ]);
+                        Notification::make()
+                            ->title($record->isPaid()
+                                ? 'Pedido confirmado y pagado — inventario descontado'
+                                : 'Pedido confirmado — pendiente de cobro contraentrega')
+                            ->success()
+                            ->send();
                     }),
             ])
             ->bulkActions([

@@ -10,6 +10,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Get;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -36,25 +37,59 @@ class ViewOrder extends ViewRecord
                 ->icon('heroicon-o-check-badge')
                 ->color('success')
                 ->modalHeading('Confirmar pedido')
-                ->modalDescription('Sube el comprobante de pago antes de confirmar. El inventario se descontará automáticamente.')
-                ->modalSubmitActionLabel('Confirmar y guardar comprobante')
+                ->modalDescription('Indica el método de pago. Si ya se pagó (transferencia/efectivo), sube el comprobante: la venta se reportará a Meta como compra. Contraentrega se reporta cuando se marque como entregado y pagado. El inventario se descontará automáticamente.')
+                ->modalSubmitActionLabel('Confirmar pedido')
                 ->visible(fn (Order $record): bool => $record->status === Order::STATUS_PENDING
                     && auth()->user()->can('changeStatus', $record))
+                ->mountUsing(fn (\Filament\Forms\Form $form, Order $record) => $form->fill([
+                    'payment_method' => $record->payment_method ?? Order::PAYMENT_TRANSFER,
+                ]))
                 ->form([
+                    Select::make('payment_method')
+                        ->label('Método de pago')
+                        ->options(fn (Order $record) => $record->payment_method === Order::PAYMENT_WOMPI
+                            ? Order::PAYMENT_METHODS
+                            : Order::MANUAL_PAYMENT_METHODS)
+                        ->required()
+                        ->live(),
                     FileUpload::make('payment_proof_path')
                         ->label('Comprobante de pago')
                         ->image()
                         ->disk('public')
                         ->directory('payment-proofs')
                         ->imagePreviewHeight('200')
-                        ->required(),
+                        ->required(fn (Get $get): bool => $get('payment_method') !== Order::PAYMENT_CASH_ON_DELIVERY)
+                        ->hidden(fn (Get $get): bool => $get('payment_method') === Order::PAYMENT_CASH_ON_DELIVERY),
                 ])
                 ->action(function (Order $record, array $data): void {
                     $record->update([
                         'status'             => Order::STATUS_CONFIRMED,
-                        'payment_proof_path' => $data['payment_proof_path'],
+                        'payment_method'     => $data['payment_method'],
+                        'payment_proof_path' => $data['payment_proof_path'] ?? $record->payment_proof_path,
                     ]);
-                    Notification::make()->title('Pedido confirmado — inventario descontado')->success()->send();
+                    Notification::make()
+                        ->title($record->isPaid()
+                            ? 'Pedido confirmado y pagado — inventario descontado'
+                            : 'Pedido confirmado — pendiente de cobro contraentrega')
+                        ->success()
+                        ->send();
+                    $this->redirect($this->getResource()::getUrl('view', ['record' => $record->id]));
+                }),
+
+            Actions\Action::make('mark_delivered_paid')
+                ->label('Entregado y pagado')
+                ->icon('heroicon-o-banknotes')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('¿El cliente pagó el pedido contraentrega?')
+                ->modalDescription('El pedido pasará a Completado y la venta se reportará a Meta como compra.')
+                ->visible(fn (Order $record): bool => $record->payment_method === Order::PAYMENT_CASH_ON_DELIVERY
+                    && ! $record->isPaid()
+                    && in_array($record->status, [Order::STATUS_CONFIRMED, Order::STATUS_PROCESSING])
+                    && auth()->user()->can('changeStatus', $record))
+                ->action(function (Order $record): void {
+                    $record->update(['status' => Order::STATUS_COMPLETED]);
+                    Notification::make()->title('Pedido completado — venta registrada')->success()->send();
                     $this->redirect($this->getResource()::getUrl('view', ['record' => $record->id]));
                 }),
 
@@ -186,6 +221,26 @@ class ViewOrder extends ViewRecord
                                 'cancelled'  => 'Cancelado',
                                 default      => $state,
                             }),
+                        TextEntry::make('source')
+                            ->label('Origen')
+                            ->badge()
+                            ->formatStateUsing(fn (?string $state): string => Order::SOURCES[$state] ?? (string) $state),
+                        TextEntry::make('payment_method')
+                            ->label('Método de pago')
+                            ->badge()
+                            ->placeholder('Por definir')
+                            ->formatStateUsing(fn (?string $state): string => Order::PAYMENT_METHODS[$state] ?? (string) $state),
+                        TextEntry::make('paid_at')
+                            ->label('Pagado')
+                            ->dateTime('d/m/Y H:i')
+                            ->placeholder('No pagado')
+                            ->badge()
+                            ->color(fn (Order $record): string => $record->isPaid() ? 'success' : 'warning'),
+                        TextEntry::make('meta_purchase_sent_at')
+                            ->label('Compra reportada a Meta')
+                            ->dateTime('d/m/Y H:i')
+                            ->placeholder('No')
+                            ->visible(fn (Order $record): bool => $record->isFromWebsite()),
                         TextEntry::make('customer_name')->label('Cliente'),
                         TextEntry::make('customer_email')->label('Email'),
                         TextEntry::make('customer_phone')->label('Teléfono'),
